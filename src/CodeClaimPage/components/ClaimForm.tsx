@@ -26,6 +26,7 @@ import { COLORS, STYLES, TX_STATUS } from 'lib/constants';
 import abi from 'abis/PoapDelegatedMint.json';
 import { useWindowWidth } from '@react-hook/window-size';
 import dayjs from 'dayjs';
+import { parse } from "date-fns";
 
 type QRFormValues = {
   address: string;
@@ -224,8 +225,8 @@ const ClaimForm: React.FC<{
       for claims with email.
     </div>
   );
-
-  if (claim && new Date(claim.event.expiry_date) < new Date()) {
+  const eventDate = claim && parse(claim.event.expiry_date, 'dd-MMM-yyyy', new Date());
+  if (eventDate && eventDate < new Date()) {
     return (
       <div className={'container claim-info'} data-aos="fade-up" data-aos-delay="300">
         This POAP can’t be minted because it’s been too long since the event finished
@@ -235,7 +236,7 @@ const ClaimForm: React.FC<{
     );
   }
 
-  const daysExpired = claim ? dayjs(new Date(claim.event.expiry_date)).diff(dayjs(), 'day') : 0
+  const daysExpired = eventDate ? dayjs(eventDate).diff(dayjs(), 'day') : 0
   const dateString = (date: Date) => {
     const day = parseInt(date.toLocaleDateString("en-US", { day: 'numeric' }))
     return date.toLocaleDateString("en-US", { month: 'long' }) +
@@ -279,7 +280,7 @@ const ClaimForm: React.FC<{
                   onClick={!isSubmitting && !migrateInProcess && !claimed ? toggleCheckbox : () => {}}
                 >
                   {
-                    claim ? 
+                    claim ?
                       <><br />This POAP can be minted for the next {daysExpired === 1 ? 'day' : `${daysExpired} days`}. <br />
                       It will expire on {dateString(new Date(claim.event.expiry_date))} <br /><br /></> : null
                   }
