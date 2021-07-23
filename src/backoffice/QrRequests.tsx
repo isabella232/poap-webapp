@@ -1,11 +1,10 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { CSSProperties, FC, PropsWithChildren, useEffect, useState } from 'react';
 import { OptionTypeBase } from 'react-select';
-import { Link } from 'react-router-dom';
 
 /* Libraries */
 import ReactPaginate from 'react-paginate';
 import ReactModal from 'react-modal';
-import { Formik,Field } from 'formik';
+import { Field, Formik } from 'formik';
 import { useToasts } from 'react-toast-notifications';
 
 /* Components */
@@ -13,33 +12,41 @@ import { Loading } from '../components/Loading';
 import FilterSelect from '../components/FilterSelect';
 import FilterReactSelect from '../components/FilterReactSelect';
 import { SubmitButton } from '../components/SubmitButton';
+import { Column, SortingRule, TableInstance, useExpanded, useSortBy, useTable } from 'react-table';
+import { Link } from 'react-router-dom';
 
 /* Helpers */
 import {
   eventOptionType,
+  getEvents,
   getQrRequests,
   PoapEvent,
-  getEvents,
+  QrRequest,
   setQrRequests,
-  QrRequest
+  SortCondition,
+  SortDirection,
 } from '../api';
+import { format } from 'date-fns';
+import { timeSince } from '../lib/helpers';
+import { useWindowWidth } from '@react-hook/window-size/throttled';
 
 /* Assets */
 import edit from 'images/edit.svg';
 import editDisable from 'images/edit-disable.svg';
 import checked from '../images/checked.svg';
 import error from '../images/error.svg';
+import sortDown from 'images/sort-down.png';
+import sortUp from 'images/sort-up.png';
 
 type PaginateAction = {
   selected: number;
 };
 
-
 // creation modal types
 type CreationModalProps = {
   handleModalClose: () => void;
   fetchQrRequests: () => void;
-  qrRequest: QrRequest | null;
+  qrRequest?: QrRequest;
 };
 
 type CreationModalFormikValues = {
@@ -50,39 +57,32 @@ const QrRequests: FC = () => {
   const [page, setPage] = useState<number>(0);
   const [limit, setLimit] = useState<number>(10);
   const [total, setTotal] = useState<number>(0);
-  const [isFetchingQrCodes, setIsFetchingQrCodes] = useState<null | boolean>(null);
+  const [isFetchingQrCodes, setIsFetchingQrCodes] = useState<boolean>(false);
   const [reviewedStatus, setReviewedStatus] = useState<string>('');
   const [selectedEvent, setSelectedEvent] = useState<number | undefined>(undefined);
-  const [initialFetch, setInitialFetch] = useState<boolean>(true);
   const [isCreationModalOpen, setIsCreationModalOpen] = useState<boolean>(false);
-  const [qrRequests, setQrRequests] = useState<null | QrRequest[]>(null);
-  const [selectedQrRequest, setSelectedQrRequest] = useState<null | QrRequest>(null);
+  const [qrRequests, setQrRequests] = useState<QrRequest[]>([]);
+  const [selectedQrRequest, setSelectedQrRequest] = useState<undefined | QrRequest>(undefined);
   const [events, setEvents] = useState<PoapEvent[]>([]);
+  const [sortCondition, setSortCondition] = useState<undefined | SortCondition>(undefined);
+  const width = useWindowWidth();
 
   useEffect(() => {
-    fetchEvents();
-    fetchQrRequests();
-    setInitialFetch(false);
+    fetchEvents().then();
+    fetchQrRequests().then();
   }, []); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   useEffect(() => {
-    if (!initialFetch) {
-      fetchQrRequests();
-    }
+    fetchQrRequests().then();
   }, [page]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   useEffect(() => {
-    if (!initialFetch) {
-      cleanQrRequestSelection();
-      setPage(0);
-      fetchQrRequests();
-    }
-  }, [selectedEvent, reviewedStatus, limit]); /* eslint-disable-line react-hooks/exhaustive-deps */
-
-  const cleanQrRequestSelection = () => setQrRequests([]);
+    setPage(0);
+    fetchQrRequests().then();
+  }, [selectedEvent, reviewedStatus, limit, sortCondition]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   const fetchQrRequests = async () => {
-    setIsFetchingQrCodes(true)
+    setIsFetchingQrCodes(true);
 
     let event_id = undefined;
     if (selectedEvent !== undefined) event_id = selectedEvent > -1 ? selectedEvent : undefined;
@@ -91,12 +91,12 @@ const QrRequests: FC = () => {
 
     if (reviewedStatus) _status = reviewedStatus === 'reviewed';
 
-    const response = await getQrRequests(limit, page * limit,_status,event_id);
-    const { qr_requests, total } = response
+    const response = await getQrRequests(limit, page * limit, _status, event_id, sortCondition);
+    const { qr_requests, total } = response;
 
     setTotal(total);
-    setQrRequests(qr_requests)
-    setIsFetchingQrCodes(false)
+    setQrRequests(qr_requests);
+    setIsFetchingQrCodes(false);
   };
 
   const handleSelectChange = (option: OptionTypeBase): void => {
@@ -117,14 +117,15 @@ const QrRequests: FC = () => {
     setLimit(parseInt(value, 10));
   };
 
-  const handleCreationModalClick = (qr: QrRequest): void => {
-    setSelectedQrRequest(qr)
-    setIsCreationModalOpen(true)
+  const handleCreationModalClick = (id: number): void => {
+    const qr = qrRequests?.find((x) => x.id === id);
+    setSelectedQrRequest(qr);
+    setIsCreationModalOpen(true);
   };
 
   const handleCreationModalRequestClose = (): void => {
-    setSelectedQrRequest(null)
-    setIsCreationModalOpen(false)
+    setSelectedQrRequest(undefined);
+    setIsCreationModalOpen(false);
   };
 
   const fetchEvents = async () => {
@@ -140,6 +141,33 @@ const QrRequests: FC = () => {
       return { value: event.id, label: label, start_date: event.start_date };
     });
   }
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return `${timeSince(date)} ago`;
+  };
+
+  const handleOnSortChanged = (sortRules: SortingRule<QrRequestTableData>[]) => {
+    if (!sortRules || sortRules.length < 1) return;
+    const sortRule = sortRules[0];
+    const sort_direction = sortRule.desc ? SortDirection.descending : SortDirection.ascending;
+    const sortCondition: SortCondition = { sort_by: sortRule.id, sort_direction };
+    setSortCondition(sortCondition);
+  };
+
+  const getTableData = (): QrRequestTableData[] => {
+    return qrRequests.map((request) => {
+      return {
+        id: request.id,
+        event: request.event,
+        created_date: formatDate(request.created_date),
+        reviewed_date: request.reviewed ? formatDate(request.reviewed_date) : '-',
+        reviewed_by: request.reviewed ? request.reviewed_by : '-',
+        reviewed: request.reviewed,
+        amount: `${request.accepted_codes} / ${request.requested_codes}`,
+      };
+    });
+  };
 
   return (
     <div className={'admin-table qr'}>
@@ -185,126 +213,109 @@ const QrRequests: FC = () => {
         </div>
       </div>
 
-      {isFetchingQrCodes && <Loading />}
+      {width > 990 ? (
+        <QrRequestTable
+          data={getTableData()}
+          loading={isFetchingQrCodes}
+          onEdit={handleCreationModalClick}
+          onSortChange={handleOnSortChanged}
+        />
+      ) : (
+        <QrRequestTableMobile
+          data={getTableData()}
+          loading={isFetchingQrCodes}
+          onEdit={handleCreationModalClick}
+          onSortChange={handleOnSortChanged}
+        />
+      )}
 
-      {qrRequests && qrRequests.length !== 0 && !isFetchingQrCodes && (
-        <div className={'qr-table-section'}>
-          <div className={'row table-header visible-md'}>
-            <div className={'col-md-1 center'}>#</div>
-            <div className={'col-md-3'}>Event</div>
-            <div className={'col-md-2'}>Mail</div>
-            <div className={'col-md-2 center'}>Start Date</div>
-            <div className={'col-md-2 center'}>Code amount</div>
-            <div className={'col-md-1 center'}>Reviewed</div>
-            <div className={'col-md-1 center'}></div>
-          </div>
-          <div className={'admin-table-row qr-table'}>
-            {qrRequests && qrRequests.map((qr, i) => {
-              return (
-                <div className={`row ${i % 2 === 0 ? 'even' : 'odd'}`} key={qr.id}>
-
-                  <div className={'col-md-1 col-xs-4 center'}>
-                    <span className={'visible-sm'}>#: </span>
-                    {qr.id}
-                  </div>
-
-                  <div className={'col-md-3 ellipsis col-xs-12'}>
-                    <span className={'visible-sm'}>Event: </span>
-                    <Link to={`/admin/events/${qr.event.fancy_id}`} target="_blank" rel="noopener noreferrer">
-                      {qr.event.name}
-                    </Link>
-                  </div>
-
-                  <div className={'col-md-2 col-xs-12 ellipsis'}>
-                    <span className={'visible-sm'}>Mail: </span>
-                    {qr.event.email}
-                  </div>
-
-                  <div className={'col-md-2 col-xs-12 center'}>
-                    <span className={'visible-sm'}>Start Date: </span>
-                    {qr.event.start_date}
-                  </div>
-
-                  <div className={'col-md-2 col-xs-12 center'}>
-                    <span className={'visible-sm'}>Code amount: </span>
-                    {qr.accepted_codes} / {qr.requested_codes}
-                  </div>
-
-                  <div className={`col-md-1 col-xs-8 center`}>
-                    <span className={'visible-sm'}>Reviewed: </span>
-                    <img
-                      src={qr.reviewed ? checked : error}
-                      alt={qr.reviewed ? `QR Reviewed` : 'QR not Reviewed'}
-                      className={'status-icon'}
-                    />
-                  </div>
-
-                  <div className={'col-md-1 col-xs-4 center'}>
-                    {!qr.reviewed ?
-                     <img src={edit} alt={'Edit'} className={'edit-icon'} onClick={() => handleCreationModalClick(qr)} />
-                     :
-                     <img src={editDisable} alt={'Edit'} className={'edit-icon'} />
-                    }
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {total > limit && (
-            <div className={'pagination'}>
-              <ReactPaginate
-                pageCount={Math.ceil(total / limit)}
-                marginPagesDisplayed={2}
-                pageRangeDisplayed={5}
-                activeClassName={'active'}
-                onPageChange={handlePageChange}
-                forcePage={page}
-              />
-            </div>
-          )}
+      {total > limit && (
+        <div className={'pagination'}>
+          <ReactPaginate
+            pageCount={Math.ceil(total / limit)}
+            marginPagesDisplayed={2}
+            pageRangeDisplayed={5}
+            activeClassName={'active'}
+            onPageChange={handlePageChange}
+            forcePage={page}
+          />
         </div>
       )}
 
-      {qrRequests && qrRequests.length === 0 && !isFetchingQrCodes && <div className={'no-results'}>No QR Requests found</div>}
+      {qrRequests && qrRequests.length === 0 && !isFetchingQrCodes && (
+        <div className={'no-results'}>No QR Requests found</div>
+      )}
     </div>
   );
 };
 
-const CreationModal: React.FC<CreationModalProps> = ({ handleModalClose, qrRequest,fetchQrRequests }) => {
+type SortIconProps = {
+  isSortedDesc?: boolean;
+};
+
+const SortIcon: React.FC<SortIconProps> = ({ isSortedDesc }) => {
+  const icon = (): string => {
+    return isSortedDesc ? sortDown : sortUp;
+  };
+
+  const alt = (): string => {
+    return isSortedDesc ? 'down' : 'up';
+  };
+
+  return (isSortedDesc !== undefined && <img src={icon()} alt={alt()} className={'icon'} />) || <div />;
+};
+
+type ExpandedIcon = {
+  isExpanded?: boolean;
+};
+
+const ExpandedIcon: React.FC<ExpandedIcon> = ({ isExpanded }) => {
+  const icon = (): string => {
+    return isExpanded ? sortDown : sortUp;
+  };
+
+  const alt = (): string => {
+    return isExpanded ? 'down' : 'up';
+  };
+
+  return <img src={icon()} alt={alt()} className={'icon sm'} />;
+};
+
+const CreationModal: React.FC<CreationModalProps> = ({ handleModalClose, qrRequest, fetchQrRequests }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { addToast } = useToasts();
 
   const handleCreationModalSubmit = async (values: CreationModalFormikValues) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     const { requested_codes } = values;
     if (qrRequest) {
-      await setQrRequests(qrRequest.id,requested_codes)
-      .then((_) => {
-        setIsSubmitting(false);
-        addToast('QR Request approved correctly', {
-          appearance: 'success',
-          autoDismiss: true,
+      await setQrRequests(qrRequest.id, requested_codes)
+        .then((_) => {
+          setIsSubmitting(false);
+          addToast('QR Request approved correctly', {
+            appearance: 'success',
+            autoDismiss: true,
+          });
+          fetchQrRequests();
+          handleModalClose();
+        })
+        .catch((e) => {
+          console.log(e);
+          addToast(e.message, {
+            appearance: 'error',
+            autoDismiss: false,
+          });
         });
-        fetchQrRequests();
-        handleModalClose();
-      })
-      .catch((e) => {
-        console.log(e);
-        addToast(e.message, {
-          appearance: 'error',
-          autoDismiss: false,
-        });
-      });
     }
-    setIsSubmitting(false)
+    setIsSubmitting(false);
   };
-  
+
   const handleCreationModalClosing = () => handleModalClose();
 
   return (
     <Formik
       initialValues={{
-        requested_codes: qrRequest?.requested_codes ? qrRequest?.requested_codes : 0
+        requested_codes: qrRequest?.requested_codes ? qrRequest?.requested_codes : 0,
       }}
       validateOnBlur={false}
       validateOnChange={false}
@@ -324,7 +335,12 @@ const CreationModal: React.FC<CreationModalProps> = ({ handleModalClose, qrReque
             </div>
             <div className="modal-content">
               <div className="modal-buttons-container creation-modal">
-                <SubmitButton text="Cancel" isSubmitting={false} canSubmit={true} onClick={handleCreationModalClosing} />
+                <SubmitButton
+                  text="Cancel"
+                  isSubmitting={false}
+                  canSubmit={true}
+                  onClick={handleCreationModalClosing}
+                />
                 <SubmitButton text="Accept" isSubmitting={isSubmitting} canSubmit={true} onClick={handleSubmit} />
               </div>
             </div>
@@ -335,4 +351,270 @@ const CreationModal: React.FC<CreationModalProps> = ({ handleModalClose, qrReque
   );
 };
 
+type EditButtonProps = {
+  id: number;
+  reviewed: boolean;
+  onClick: (id: number) => void;
+  style?: CSSProperties;
+};
+
+const EditButton: React.FC<EditButtonProps> = ({ id, reviewed, onClick, style }) => {
+  return !reviewed ? (
+    <img src={edit} alt={'Edit'} className={'icon'} onClick={() => onClick(id)} style={style} />
+  ) : (
+    <img src={editDisable} alt={'Edit'} className={'icon'} style={style} />
+  );
+};
+
+type ReviewedIconProps = {
+  reviewed: boolean;
+};
+
+const ReviewedIcon: React.FC<ReviewedIconProps> = ({ reviewed }) => {
+  return <img src={reviewed ? checked : error} alt={reviewed ? `QR Reviewed` : 'QR not Reviewed'} className={'icon'} />;
+};
+
+interface QrRequestTableData {
+  id: number;
+  event: PoapEvent;
+  created_date: string;
+  amount: string;
+  reviewed_by?: string;
+  reviewed_date?: string;
+  reviewed: boolean;
+}
+
+type QrRequestTableProps = {
+  data: QrRequestTableData[];
+  loading: boolean;
+  onEdit: (id: number) => void;
+  onSortChange: (rules: Array<SortingRule<QrRequestTableData>>) => void;
+};
+
+const QrRequestTable: React.FC<QrRequestTableProps> = ({ data, onEdit, onSortChange, loading }) => {
+  const columns = React.useMemo<Column<QrRequestTableData>[]>(
+    () => [
+      {
+        id: 'expander',
+        accessor: 'reviewed',
+        Cell: ({ row }) => (
+          <span {...row.getToggleRowExpandedProps()}>
+            <ExpandedIcon isExpanded={row.isExpanded} />
+          </span>
+        ),
+        disableSortBy: true,
+      },
+      { Header: '#', accessor: 'id', disableSortBy: true },
+      {
+        id: 'event',
+        Header: () => <div className={'left'}>Event</div>,
+        Cell: (props: PropsWithChildren<TableInstance<QrRequestTableData>>) => (
+          <Link to={`/admin/events/${props.row.original.event.fancy_id}`} target="_blank" rel="noopener noreferrer">
+            {props.row.original.event.name}
+          </Link>
+        ),
+        disableSortBy: true,
+      },
+      {
+        id: 'created_date',
+        Header: 'Created Date',
+        accessor: 'created_date',
+        Cell: ({ value }) => <div className={'center'}>{value}</div>,
+      },
+      {
+        Header: 'Amount',
+        accessor: 'amount',
+        Cell: ({ value }) => <div className={'center'}>{value}</div>,
+        disableSortBy: true,
+      },
+      {
+        id: 'reviewed_by',
+        Header: () => <div className={'left'}>Reviewed By</div>,
+        accessor: 'reviewed_by',
+        disableSortBy: true,
+      },
+      {
+        id: 'reviewed_date',
+        Header: 'Reviewed Date',
+        accessor: 'reviewed_date',
+        Cell: ({ value }) => <div className={'center'}>{value}</div>,
+      },
+      {
+        Header: 'Reviewed',
+        accessor: 'reviewed',
+        Cell: ({ value }) => (
+          <div className={'center'}>
+            <ReviewedIcon reviewed={value} />
+          </div>
+        ),
+        disableSortBy: true,
+      },
+      {
+        id: 'edit',
+        accessor: 'reviewed',
+        Cell: (props) => (
+          <EditButton id={props.row.original.id} reviewed={props.row.original.reviewed} onClick={onEdit} />
+        ),
+        disableSortBy: true,
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    visibleColumns,
+    state: { sortBy },
+  } = useTable<QrRequestTableData>(
+    {
+      data,
+      columns,
+      manualSortBy: true,
+    },
+    useSortBy,
+    useExpanded,
+  );
+
+  useEffect(() => {
+    onSortChange(sortBy);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy]);
+
+  return (
+    <table className={'backoffice-table fluid'} {...getTableProps()}>
+      <thead>
+        {headerGroups.map((headerGroup, i) => (
+          <tr key={i} {...headerGroup.getHeaderGroupProps()}>
+            {headerGroup.headers.map((column, j) => (
+              <th key={j} {...column.getHeaderProps([column.getSortByToggleProps()])}>
+                {column.render('Header')}
+                {column.isSorted ? <SortIcon isSortedDesc={column.isSortedDesc} /> : null}
+              </th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+      <tbody {...getTableBodyProps()}>
+        {!loading &&
+          rows.map((row, i) => {
+            prepareRow(row);
+            return (
+              <React.Fragment key={i + 'fragment'}>
+                <tr key={i + 'row'} {...row.getRowProps()}>
+                  {row.cells.map((cell, j) => {
+                    return (
+                      <td key={j} {...cell.getCellProps()}>
+                        {cell.render('Cell')}
+                      </td>
+                    );
+                  })}
+                </tr>
+                {row.isExpanded ? (
+                  <tr key={i + 'expanded'}>
+                    <td className={'subcomponent'} key={i + 'subcomponent'} colSpan={visibleColumns.length}>
+                      <EventSubComponent event={row.original.event} />
+                    </td>
+                  </tr>
+                ) : null}
+              </React.Fragment>
+            );
+          })}
+        {loading && (
+          <tr>
+            <td colSpan={8}>
+              <Loading />
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  );
+};
+
+type EventSubComponentProps = {
+  event: PoapEvent;
+};
+
+const EventSubComponent: React.FC<EventSubComponentProps> = ({ event }) => {
+  const dateFormatter = (dateString: string) => format(new Date(dateString), 'dd-MMM-yyyy');
+
+  return (
+    <div style={{ textAlign: 'center' }} className={'subcomponent'}>
+      <h1 style={{ marginBottom: '0.5em' }}>
+        #{event.id} -{event.name}
+      </h1>
+      <h4 style={{ fontWeight: 500 }}>
+        from {dateFormatter(event.start_date)} to {dateFormatter(event.end_date)} expires{' '}
+        {dateFormatter(event.expiry_date)}
+      </h4>
+      <img src={event.image_url} style={{ maxWidth: '150px', paddingBottom: '5px' }} alt={'event'} />
+      <div style={{ textAlign: 'center' }}>{event.description}</div>
+    </div>
+  );
+};
+
+const QrRequestTableMobile: React.FC<QrRequestTableProps> = ({ data, onEdit, loading }) => {
+  const dateFormatter = (dateString: string) => format(new Date(dateString), 'dd-MMM-yyyy');
+
+  return loading ? (
+    <Loading />
+  ) : (
+    <table className={'backoffice-table fluid'}>
+      <tbody>
+        {data.map((request, i) => (
+          <tr key={i}>
+            <td className={'wrap'}>
+              <div>
+                <span>#{request.id}</span>
+                <EditButton id={request.id} reviewed={request.reviewed} onClick={onEdit} style={{ float: 'right' }} />
+              </div>
+              <div>
+                <b>Event: </b>
+                <Link to={`/admin/events/${request.event.fancy_id}`} target="_blank" rel="noopener noreferrer">
+                  #{request.event.id} - {request.event.name}
+                </Link>
+              </div>
+              <div>
+                <b>Event description: </b> {request.event.description}
+              </div>
+              <div>
+                <b>Event from: </b> {dateFormatter(request.event.start_date)}
+              </div>
+              <div>
+                <b>Event to:</b> {dateFormatter(request.event.end_date)}
+              </div>
+              <div>
+                <b>Event expires: </b> {dateFormatter(request.event.expiry_date)}
+              </div>
+              <div>
+                <b>Amount:</b> {request.amount}
+              </div>
+              <div>
+                <b>Created Date: </b> {request.created_date}
+              </div>
+              <div>
+                <b>Reviewed: </b> <ReviewedIcon reviewed={request.reviewed} />
+              </div>
+              {request.reviewed ? (
+                <>
+                  <div>
+                    <b>Reviewed by: </b> {request.reviewed_by}
+                  </div>
+                  <div>
+                    <b>Reviewed date: </b> {request.reviewed_date}
+                  </div>
+                </>
+              ) : null}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 export { QrRequests };
