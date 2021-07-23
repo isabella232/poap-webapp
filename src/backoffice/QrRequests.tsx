@@ -160,6 +160,7 @@ const QrRequests: FC = () => {
       return {
         id: request.id,
         event: request.event,
+        organizer: request.event.email,
         created_date: formatDate(request.created_date),
         reviewed_date: request.reviewed ? formatDate(request.reviewed_date) : '-',
         reviewed_by: request.reviewed ? request.reviewed_by : '-',
@@ -377,6 +378,7 @@ const ReviewedIcon: React.FC<ReviewedIconProps> = ({ reviewed }) => {
 interface QrRequestTableData {
   id: number;
   event: PoapEvent;
+  organizer: string | undefined;
   created_date: string;
   amount: string;
   reviewed_by?: string;
@@ -410,9 +412,15 @@ const QrRequestTable: React.FC<QrRequestTableProps> = ({ data, onEdit, onSortCha
         Header: () => <div className={'left'}>Event</div>,
         Cell: (props: PropsWithChildren<TableInstance<QrRequestTableData>>) => (
           <Link to={`/admin/events/${props.row.original.event.fancy_id}`} target="_blank" rel="noopener noreferrer">
-            {props.row.original.event.name}
+            #{props.row.original.event.id} - {props.row.original.event.name}
           </Link>
         ),
+        disableSortBy: true,
+      },
+      {
+        id: 'organizer',
+        Header: () => <div className={'left'}>Organizer</div>,
+        accessor: 'organizer',
         disableSortBy: true,
       },
       {
@@ -425,12 +433,6 @@ const QrRequestTable: React.FC<QrRequestTableProps> = ({ data, onEdit, onSortCha
         Header: 'Amount',
         accessor: 'amount',
         Cell: ({ value }) => <div className={'center'}>{value}</div>,
-        disableSortBy: true,
-      },
-      {
-        id: 'reviewed_by',
-        Header: () => <div className={'left'}>Reviewed By</div>,
-        accessor: 'reviewed_by',
         disableSortBy: true,
       },
       {
@@ -517,7 +519,7 @@ const QrRequestTable: React.FC<QrRequestTableProps> = ({ data, onEdit, onSortCha
                 {row.isExpanded ? (
                   <tr key={i + 'expanded'}>
                     <td className={'subcomponent'} key={i + 'subcomponent'} colSpan={visibleColumns.length}>
-                      <EventSubComponent event={row.original.event} />
+                      <EventSubComponent event={row.original.event} reviewed_by={row.original.reviewed_by} />
                     </td>
                   </tr>
                 ) : null}
@@ -538,22 +540,21 @@ const QrRequestTable: React.FC<QrRequestTableProps> = ({ data, onEdit, onSortCha
 
 type EventSubComponentProps = {
   event: PoapEvent;
+  reviewed_by: string | undefined;
 };
 
-const EventSubComponent: React.FC<EventSubComponentProps> = ({ event }) => {
+const EventSubComponent: React.FC<EventSubComponentProps> = ({ event, reviewed_by }) => {
   const dateFormatter = (dateString: string) => format(new Date(dateString), 'dd-MMM-yyyy');
 
   return (
     <div style={{ textAlign: 'center' }} className={'subcomponent'}>
-      <h1 style={{ marginBottom: '0.5em' }}>
-        #{event.id} -{event.name}
-      </h1>
       <h4 style={{ fontWeight: 500 }}>
         from {dateFormatter(event.start_date)} to {dateFormatter(event.end_date)} expires{' '}
         {dateFormatter(event.expiry_date)}
       </h4>
-      <img src={event.image_url} style={{ maxWidth: '150px', paddingBottom: '5px' }} alt={'event'} />
+      <img src={event.image_url} style={{ maxWidth: '100px', paddingBottom: '5px' }} alt={'event'} />
       <div style={{ textAlign: 'center' }}>{event.description}</div>
+      <div style={{ textAlign: 'center' }}>Reviewed by: {reviewed_by}</div>
     </div>
   );
 };
@@ -578,6 +579,9 @@ const QrRequestTableMobile: React.FC<QrRequestTableProps> = ({ data, onEdit, loa
                 <Link to={`/admin/events/${request.event.fancy_id}`} target="_blank" rel="noopener noreferrer">
                   #{request.event.id} - {request.event.name}
                 </Link>
+              </div>
+              <div>
+                <b>Organizer: </b> {request.event.email}
               </div>
               <div>
                 <b>Event description: </b> {request.event.description}
