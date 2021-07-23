@@ -332,9 +332,9 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
     <div key={''} className={'backoffice-tooltip'}>
       {' '}
       {!isExpiryEvent ? (
-        <>A requests for this event is being processed</>
+        <>A request for this event is being processed</>
       ) : (
-        <>You can't requests codes on an expired event</>
+        <>You can't request codes on an expired event</>
       )}
     </div>
   );
