@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { RouteComponentProps } from 'react-router';
-
+import { RouteComponentProps, useLocation } from 'react-router';
+import queryString from 'query-string';
 /* Helpers */
 import { HashClaim, getClaimHash, getTokensFor } from '../api';
 import { isValidEmail } from '../lib/helpers';
@@ -30,7 +30,11 @@ export const CodeClaimPage: React.FC<RouteComponentProps<{ hash: string }>> = ({
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [beneficiaryHasToken, setBeneficiaryHasToken] = useState<boolean>(false);
 
+  const location = useLocation();
+  const queryParams = queryString.parse(location.search);
+
   let { hash } = match.params;
+  const address = queryParams.address? queryParams.address.toString() : '';
   let title = 'POAP Claim';
   let image = EmptyBadge;
 
@@ -102,7 +106,7 @@ export const CodeClaimPage: React.FC<RouteComponentProps<{ hash: string }>> = ({
   }
 
   if (claim && isVerified) {
-    body = <ClaimForm claim={claim} onSubmit={continueClaim} />;
+    body = <ClaimForm claim={claim} address={address} onSubmit={continueClaim} />;
 
     title = claim.event.name;
     if (claim.claimed) {

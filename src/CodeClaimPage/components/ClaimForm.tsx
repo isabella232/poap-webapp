@@ -36,11 +36,12 @@ const CONTRACT_ADDRESS = process.env.REACT_APP_MINT_DELEGATE_CONTRACT;
 
 const ClaimForm: React.FC<{
   claim?: HashClaim;
+  address?: string;
   template?: Template | TemplatePageFormValues;
   onSubmit: (claim: HashClaim) => void;
-}> = ({ claim, onSubmit, template }) => {
+}> = ({ claim, address, onSubmit, template }) => {
   const [claimed, setClaimed] = useState<boolean>(false);
-  const [account, setAccount] = useState<string>('');
+  const [account, setAccount] = useState<string>(address || '');
   const [migrateInProcess, setMigrateInProcess] = useState<boolean>(false);
   const [migrate, setMigrate] = useState<boolean>(false);
   const [token, setToken] = useState<number | null>(null);
@@ -56,7 +57,7 @@ const ClaimForm: React.FC<{
   const mobileImageUrl = useImageSrc(mobileImageUrlRaw);
 
   const { addToast } = useToasts();
-  const width = useWindowWidth()
+  const width = useWindowWidth();
 
   useEffect(() => {
     if (migrateInProcess && !token) {
