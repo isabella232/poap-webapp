@@ -38,6 +38,7 @@ import {
   PoapFullEvent,
   PoapEvent,
   getEvent,
+  getEventById,
   getEvents,
   updateEvent,
   createEvent,
@@ -147,20 +148,33 @@ export const EditEventForm: React.FC<RouteComponentProps<{
   eventId: string;
 }>> = ({ location, match }) => {
   const [event, setEvent] = useState<null | PoapEvent>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const history = useHistory();
 
   useEffect(() => {
     const fn = async () => {
-      const event = await getEvent(match.params.eventId);
+      setLoading(true)
+      let event = null;
+      if (isNaN(+match.params.eventId)) {
+        event = await getEvent(match.params.eventId);
+      } else {
+        event = await getEventById(match.params.eventId);
+      }
       setEvent(event);
+      setLoading(false)
     };
     fn();
   }, [location, match]);
 
-  if (!event) {
-    return <div>Loading...</div>;
+  if (!loading) {
+    if (!event) {
+      history.push(ROUTES.events.path);
+    } else {
+      return <EventForm event={event} />;
+    }
   }
 
-  return <EventForm event={event} />;
+  return <div>Loading...</div>;
 };
 
 type TemplateOptionType = {
