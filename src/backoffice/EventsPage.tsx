@@ -148,30 +148,33 @@ export const EditEventForm: React.FC<RouteComponentProps<{
   eventId: string;
 }>> = ({ location, match }) => {
   const [event, setEvent] = useState<null | PoapEvent>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const history = useHistory();
-  
+
   useEffect(() => {
     const fn = async () => {
+      setLoading(true)
       let event = null;
-      try {
+      if (isNaN(+match.params.eventId)) {
         event = await getEvent(match.params.eventId);
-      } catch(err) {
-        try {
-          event = await getEventById(match.params.eventId);
-        } catch(err2) {
-          history.push(ROUTES.events.path);
-        }
+      } else {
+        event = await getEventById(match.params.eventId);
       }
       setEvent(event);
+      setLoading(false)
     };
     fn();
   }, [location, match]);
 
-  if (!event) {
-    return <div>Loading...</div>;
+  if (!loading) {
+    if (!event) {
+      history.push(ROUTES.events.path);
+    } else {
+      return <EventForm event={event} />;
+    }
   }
 
-  return <EventForm event={event} />;
+  return <div>Loading...</div>;
 };
 
 type TemplateOptionType = {

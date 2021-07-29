@@ -504,8 +504,7 @@ export async function getEvent(fancyId: string): Promise<null | PoapFullEvent> {
 }
 
 export async function getEventById(id: string): Promise<null | PoapFullEvent> {
-  const isAdmin = authClient.isAuthenticated();
-  return isAdmin ? secureFetch(`${API_BASE}/events/id/${id}`) : fetchJson(`${API_BASE}/events/id/${id}`);
+  return fetchJson(`${API_BASE}/events/id/${id}`);
 }
 
 export async function getSetting(settingName: string): Promise<null | PoapSetting> {
