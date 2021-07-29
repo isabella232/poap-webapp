@@ -148,7 +148,8 @@ export const EditEventForm: React.FC<RouteComponentProps<{
   eventId: string;
 }>> = ({ location, match }) => {
   const [event, setEvent] = useState<null | PoapEvent>(null);
-
+  const history = useHistory();
+  
   useEffect(() => {
     const fn = async () => {
       let event = null;
@@ -158,6 +159,7 @@ export const EditEventForm: React.FC<RouteComponentProps<{
         try {
           event = await getEventById(match.params.eventId);
         } catch(err2) {
+          history.push(ROUTES.events.path);
         }
       }
       setEvent(event);
