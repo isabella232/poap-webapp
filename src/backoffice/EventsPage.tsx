@@ -38,6 +38,7 @@ import {
   PoapFullEvent,
   PoapEvent,
   getEvent,
+  getEventById,
   getEvents,
   updateEvent,
   createEvent,
@@ -150,7 +151,15 @@ export const EditEventForm: React.FC<RouteComponentProps<{
 
   useEffect(() => {
     const fn = async () => {
-      const event = await getEvent(match.params.eventId);
+      let event = null;
+      try {
+        event = await getEvent(match.params.eventId);
+      } catch(err) {
+        try {
+          event = await getEventById(match.params.eventId);
+        } catch(err2) {
+        }
+      }
       setEvent(event);
     };
     fn();

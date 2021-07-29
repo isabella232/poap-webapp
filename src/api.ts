@@ -503,6 +503,11 @@ export async function getEvent(fancyId: string): Promise<null | PoapFullEvent> {
   return isAdmin ? secureFetch(`${API_BASE}/events-admin/${fancyId}`) : fetchJson(`${API_BASE}/events/${fancyId}`);
 }
 
+export async function getEventById(id: string): Promise<null | PoapFullEvent> {
+  const isAdmin = authClient.isAuthenticated();
+  return isAdmin ? secureFetch(`${API_BASE}/events/id/${id}`) : fetchJson(`${API_BASE}/events/id/${id}`);
+}
+
 export async function getSetting(settingName: string): Promise<null | PoapSetting> {
   return fetchJson(`${API_BASE}/settings/${settingName}`);
 }
