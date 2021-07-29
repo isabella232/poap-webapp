@@ -67,7 +67,7 @@ const ClaimFinished: React.FC<{ claim: HashClaim }> = ({ claim }) => {
   const getCollectorNumber = async () => {
     try {
       const number = await tokensQuantityByEventId(claim.event_id);
-      setCollectorNumber(getNumberWithOrdinal(number + 1));
+      setCollectorNumber(getNumberWithOrdinal(number));
     } catch (e) {
       console.log(e);
     }
@@ -78,7 +78,7 @@ const ClaimFinished: React.FC<{ claim: HashClaim }> = ({ claim }) => {
       if (tokens.length === 0) {
         return 'This is your first POAP';
       } else {
-        return `After this minting, this collection has ${tokens.length + 1} POAP tokens`;
+        return `After this minting, this collection has ${tokens.length} POAP tokens`;
       }
     }
     return null;
