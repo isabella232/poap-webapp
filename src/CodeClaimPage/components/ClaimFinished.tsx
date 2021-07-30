@@ -57,7 +57,12 @@ const ClaimFinished: React.FC<{ claim: HashClaim }> = ({ claim }) => {
 
   const getEvents = async () => {
     try {
-      const tokens = await getTokensFor(claim.beneficiary);
+      let tokens = null;
+      // use the user_input ( email ) if there is no beneficiary ( address ) to get collection
+      const collectionAddress = claim.beneficiary ? claim.beneficiary : claim.user_input;
+      if ( collectionAddress) {
+        tokens = await getTokensFor(collectionAddress);
+      }
       setTokens(tokens);
     } catch (e) {
       console.log(e);
