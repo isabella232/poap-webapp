@@ -61,24 +61,24 @@ const QrRequests: FC = () => {
   const [reviewedStatus, setReviewedStatus] = useState<string>('');
   const [selectedEvent, setSelectedEvent] = useState<number | undefined>(undefined);
   const [isCreationModalOpen, setIsCreationModalOpen] = useState<boolean>(false);
-  const [qrRequests, setQrRequests] = useState<QrRequest[]>([]);
+  const [currentQrRequests, setCurrentQrRequests] = useState<QrRequest[]>([]);
   const [selectedQrRequest, setSelectedQrRequest] = useState<undefined | QrRequest>(undefined);
   const [events, setEvents] = useState<PoapEvent[]>([]);
   const [sortCondition, setSortCondition] = useState<undefined | SortCondition>(undefined);
   const width = useWindowWidth();
 
   useEffect(() => {
-    fetchEvents().then();
-    fetchQrRequests().then();
+    fetchEvents();
+    fetchQrRequests();
   }, []); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   useEffect(() => {
-    fetchQrRequests().then();
+    fetchQrRequests();
   }, [page]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   useEffect(() => {
     setPage(0);
-    fetchQrRequests().then();
+    fetchQrRequests();
   }, [selectedEvent, reviewedStatus, limit, sortCondition]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   const fetchQrRequests = async () => {
@@ -95,7 +95,7 @@ const QrRequests: FC = () => {
     const { qr_requests, total } = response;
 
     setTotal(total);
-    setQrRequests(qr_requests);
+    setCurrentQrRequests(qr_requests);
     setIsFetchingQrCodes(false);
   };
 
@@ -118,7 +118,7 @@ const QrRequests: FC = () => {
   };
 
   const handleCreationModalClick = (id: number): void => {
-    const qr = qrRequests?.find((x) => x.id === id);
+    const qr = currentQrRequests?.find((x) => x.id === id);
     setSelectedQrRequest(qr);
     setIsCreationModalOpen(true);
   };
@@ -156,7 +156,7 @@ const QrRequests: FC = () => {
   };
 
   const getTableData = (): QrRequestTableData[] => {
-    return qrRequests.map((request) => {
+    return currentQrRequests.map((request) => {
       return {
         id: request.id,
         event: request.event,
@@ -243,7 +243,7 @@ const QrRequests: FC = () => {
         </div>
       )}
 
-      {qrRequests && qrRequests.length === 0 && !isFetchingQrCodes && (
+      {currentQrRequests && currentQrRequests.length === 0 && !isFetchingQrCodes && (
         <div className={'no-results'}>No QR Requests found</div>
       )}
     </div>
@@ -461,7 +461,7 @@ const QrRequestTable: React.FC<QrRequestTableProps> = ({ data, onEdit, onSortCha
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [data],
   );
 
   const {
