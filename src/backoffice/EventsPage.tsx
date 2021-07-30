@@ -598,7 +598,7 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
               </div>
               <div className="bk-group">
                 <ImageContainer
-                  text="Image of the POAP"
+                  text="POAP's artwork"
                   handleFileChange={handleFileChange}
                   setFieldValue={setFieldValue}
                   errors={errors}
@@ -796,9 +796,9 @@ export const ImageContainer = ({
     <ErrorMessage name={name} component="p" className="bk-error" />
     {shouldShowInfo && (
       <div className="input-field-helper">
-        Badge specs:
+        Image requirements:
         <ul>
-          <li>Mandatory: PNG format</li>
+          <li>Mandatory: PNG / APNG format</li>
           <li>Recommended: measures 500x500px, round shape, size less than 200KB</li>
         </ul>
       </div>

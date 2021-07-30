@@ -231,19 +231,19 @@ export const TokenDetailPage: React.FC<RouteComponentProps<{
                 <li>
                   <TwitterShareButton
                     url={window.location.toString()}
-                    title={`Look at my ${event.name} badge!`}
+                    title={`Look at my ${event.name} POAP NFT!`}
                     via="poapxyz"
                   >
                     <TwitterIcon size={40} round iconBgStyle={{ fill: '#6534FF' }} />
                   </TwitterShareButton>
                 </li>
                 <li>
-                  <TelegramShareButton url={window.location.toString()} title={`Look at my ${event.name} badge!`}>
+                  <TelegramShareButton url={window.location.toString()} title={`Look at my ${event.name} POAP NFT!`}>
                     <TelegramIcon size={40} round iconBgStyle={{ fill: '#6534FF' }} />
                   </TelegramShareButton>
                 </li>
                 <li>
-                  <RedditShareButton url={window.location.toString()} title={`Look at my ${event.name} badge!`}>
+                  <RedditShareButton url={window.location.toString()} title={`Look at my ${event.name} POAP NFT!`}>
                     <RedditIcon size={40} round iconBgStyle={{ fill: '#6534FF' }} />
                   </RedditShareButton>
                 </li>
