@@ -247,7 +247,7 @@ export const AddressTokensPage: FC<RouteComponentProps> = ({ location, match }) 
           {!error && !loading && address && isValidEmail(address) && tokens && tokens.length > 0 && (
             <div className="scan-email-badge-container">
               <span className="scan-email-badge">
-                <b>Note:</b> These badges are not in an Ethereum wallet yet. When you're ready to claim your POAPS, please click on
+                <b>Note:</b> These badges are not in an Ethereum wallet yet. When you're ready to claim your POAPs, please click on
                 the button below
               </span>
               <div className="scan-email-badge-button-container">
