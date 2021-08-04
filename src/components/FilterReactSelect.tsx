@@ -5,6 +5,7 @@ type FilterReactSelectProps = {
   options: any;
   placeholder: string;
   onChange: (option: OptionTypeBase) => void;
+  className?: string;
 };
 
 const colourStyles = {
@@ -18,16 +19,12 @@ const colourStyles = {
   input: (styles: any) => ({ ...styles, height: 36 }),
 };
 
-const FilterReactSelect: React.FC<FilterReactSelectProps> = ({
-  options,
-  placeholder,
-  onChange,
-}) => (
+const FilterReactSelect: React.FC<FilterReactSelectProps> = ({ options, placeholder, onChange, className }) => (
   <Select
     options={options}
     onChange={onChange}
     placeholder={placeholder}
-    className="rselect"
+    className={'rselect ' + (className || null)}
     styles={colourStyles}
   />
 );

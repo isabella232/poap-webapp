@@ -141,20 +141,20 @@ const ROUTES = {
     roles: [ROLES.administrator],
     title: 'Notifications List',
   },
-  qr: {
-    path: '/admin/qr',
+  codes: {
+    path: '/admin/codes',
     roles: [ROLES.administrator, ROLES.eventHost],
-    title: 'Manage QR Codes',
+    title: 'Manage Codes',
   },
   adminLogs: {
     path: '/admin/logs',
     roles: [ROLES.administrator],
     title: 'Logs',
   },
-  qrRequest: {
-    path: '/admin/qr-requests',
+  codesRequest: {
+    path: '/admin/requests',
     roles: [ROLES.administrator],
-    title: 'Manage QR Requests',
+    title: 'Manage Codes Requests',
   },
 
   deliveries: {
@@ -176,23 +176,12 @@ const ROUTES = {
   },
 
   websites: {
-    admin: {
+    websitesManage: {
       path: '/admin/websites',
-      roles: [ROLES.administrator],
-      title: 'Websites',
+      roles: [ROLES.administrator, ROLES.eventHost],
+      title: 'Manage Websites',
     },
-    newForm: {
-      path: '/admin/websites/new',
-      roles: [ROLES.administrator],
-      title: 'New Website',
-    },
-    editForm: {
-      path: '/admin/websites/edit/:claimName',
-      roles: [ROLES.administrator],
-      title: 'Edit Website',
-    }
   },
-
 };
 
 const IMAGE_SUPPORTED_FORMATS = ['image/png'];

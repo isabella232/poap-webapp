@@ -6,12 +6,14 @@ export type Address = string;
 export type Params = {
   [key: string]: string | number | boolean | undefined;
 };
+
 export interface TemplatesResponse<Result> {
   total: number;
   next?: string;
   previous?: string;
   event_templates: Result[];
 }
+
 export interface TokenInfo {
   tokenId: string;
   owner: string;
@@ -25,6 +27,7 @@ export type QrCodesListAssignResponse = {
   success: boolean;
   alreadyclaimedQrs: string[];
 };
+
 export interface PoapEvent {
   id: number;
   fancy_id: string;
@@ -45,16 +48,32 @@ export interface PoapEvent {
   virtual_event: boolean;
   email?: string;
 }
+
 export interface QrRequest {
-  event: PoapEvent;
+  id: number;
+  event_id: number;
+  website_request: boolean;
+  requested_codes: number;
   accepted_codes: number;
   created_date: string;
-  event_id: number;
-  id: number;
-  requested_codes: number;
   reviewed: boolean;
-  reviewed_by: string;
-  reviewed_date: string;
+  reviewed_by?: string;
+  reviewed_date?: string;
+  event: PoapEvent;
+  eventWebsite?: EventWebsite;
+}
+
+export interface EventWebsite {
+  id: number;
+  event_id: number;
+  claim_name: string;
+  from?: Date;
+  to?: Date;
+  captcha: boolean;
+  created_date: Date;
+  reviewed: boolean;
+  reviewed_by?: string;
+  reviewed_date?: Date;
 }
 
 export interface SortCondition {
@@ -71,9 +90,11 @@ export interface PoapFullEvent extends PoapEvent {
   secret_code?: number;
   email?: string;
 }
+
 export interface Claim extends ClaimProof {
   claimerSignature: string;
 }
+
 export interface ClaimProof {
   claimId: string;
   eventId: number;
@@ -146,6 +167,7 @@ export type EventTemplate = {
 export interface QrResult {
   token: number;
 }
+
 export interface HashClaim {
   id: number;
   qr_hash: string;
@@ -167,12 +189,14 @@ export interface HashClaim {
   result: QrResult | null;
   queue_uid?: string;
 }
+
 export interface PoapSetting {
   id: number;
   name: string;
   type: string;
   value: string;
 }
+
 export interface AdminAddress {
   id: number;
   signer: Address;
@@ -182,6 +206,7 @@ export interface AdminAddress {
   created_date: string;
   pending_tx: number;
 }
+
 export interface Transaction {
   id: number;
   tx_hash: string;
@@ -194,12 +219,14 @@ export interface Transaction {
   status: string;
   layer: string;
 }
+
 export interface PaginatedTransactions {
   limit: number;
   offset: number;
   total: number;
   transactions: Transaction[];
 }
+
 export interface EmailClaim {
   id: number;
   email: string;
@@ -330,9 +357,8 @@ const API_BASE =
 
 const API_WEBSITES =
   process.env.NODE_ENV === 'development'
-  ? `${process.env.REACT_APP_TEST_API_WEBSITES}`
-  : `${process.env.REACT_APP_API_WEBSITES}`;
-
+    ? `${process.env.REACT_APP_TEST_API_WEBSITES}`
+    : `${process.env.REACT_APP_API_WEBSITES}`;
 
 const ETH_THE_GRAPH_URL = process.env.REACT_APP_ETH_THE_GRAPH_URL;
 const L2_THE_GRAPH_URL = process.env.REACT_APP_L2_THE_GRAPH_URL;
@@ -415,11 +441,23 @@ export async function getQrRequests(
   reviewed?: boolean,
   event_id?: number,
   sort_condition?: SortCondition,
+  website_request?: boolean,
 ): Promise<PaginatedQrRequest> {
   const sort_by = sort_condition?.sort_by;
   const sort_direction = sort_condition?.sort_direction;
 
-  const params = queryString.stringify({ limit, offset, event_id, reviewed, sort_by, sort_direction }, { sort: false });
+  const params = queryString.stringify(
+    {
+      limit,
+      offset,
+      event_id,
+      reviewed,
+      sort_by,
+      sort_direction,
+      website_request,
+    },
+    { sort: false },
+  );
   try {
     return authClient.isAuthenticated()
       ? secureFetch(`${API_BASE}/qr-requests?${params}`)
@@ -432,55 +470,51 @@ export async function getQrRequests(
 export async function postQrRequests(
   event_id: number,
   requested_codes: number,
-  secret_code: number
+  secret_code: number,
+  website_request: boolean,
 ): Promise<void> {
-  return authClient.isAuthenticated() ? 
-    secureFetch(`${API_BASE}/qr-requests`, {
-      method: 'POST',
-      body: JSON.stringify({
-        event_id,
-        requested_codes,
-        secret_code,
-      }),
-      headers: { 'Content-Type': 'application/json' },
-    })
-    :
-    fetchJson(`${API_BASE}/qr-requests`, {
-      method: 'POST',
-      body: JSON.stringify({
-        event_id,
-        requested_codes,
-        secret_code,
-      }),
-      headers: { 'Content-Type': 'application/json' },
-    })
+  const body = JSON.stringify({
+    event_id,
+    requested_codes,
+    secret_code,
+    website_request,
+  });
+
+  return authClient.isAuthenticated()
+    ? secureFetch(`${API_BASE}/qr-requests`, {
+        method: 'POST',
+        body,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    : fetchJson(`${API_BASE}/qr-requests`, {
+        method: 'POST',
+        body,
+        headers: { 'Content-Type': 'application/json' },
+      });
 }
 
-export async function getActiveQrRequests(
-  event_id?: number,
-): Promise<ActiveQrRequest> {
+export async function getActiveQrRequests(event_id?: number): Promise<ActiveQrRequest> {
   const params = queryString.stringify({ event_id }, { sort: false });
   try {
-    return authClient.isAuthenticated() ? secureFetch(`${API_BASE}/qr-requests/active/count?${params}`) : fetchJson(`${API_BASE}/qr-requests/active/count?${params}`);
-  } catch(e) {
+    return authClient.isAuthenticated()
+      ? secureFetch(`${API_BASE}/qr-requests/active/count?${params}`)
+      : fetchJson(`${API_BASE}/qr-requests/active/count?${params}`);
+  } catch (e) {
     return e;
   }
 }
 
-export async function setQrRequests(
-  id: number,
-  accepted_codes: number
-): Promise<void> {
+export async function setQrRequests(id: number, accepted_codes: number): Promise<void> {
   try {
     return secureFetch(`${API_BASE}/qr-requests/${id}`, {
       method: 'PUT',
       body: JSON.stringify({
         id,
-        accepted_codes
+        accepted_codes,
       }),
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch(e) {
+  } catch (e) {
     return e;
   }
 }
@@ -498,13 +532,14 @@ export async function getTemplateById(id?: number): Promise<Template> {
     : fetchJson(`${API_BASE}/event-templates/${id}`);
 }
 
-export async function getEvent(fancyId: string): Promise<null | PoapFullEvent> {
+export async function getEventByFancyId(fancyId: string): Promise<null | PoapFullEvent> {
   const isAdmin = authClient.isAuthenticated();
   return isAdmin ? secureFetch(`${API_BASE}/events-admin/${fancyId}`) : fetchJson(`${API_BASE}/events/${fancyId}`);
 }
 
-export async function getEventById(id: string): Promise<null | PoapFullEvent> {
-  return fetchJson(`${API_BASE}/events/id/${id}`);
+export async function getEventById(id: number): Promise<PoapFullEvent | null> {
+  const isAdmin = authClient.isAuthenticated();
+  return isAdmin ? secureFetch(`${API_BASE}/events/id/${id}`) : fetchJson(`${API_BASE}/events/id/${id}`);
 }
 
 export async function getSetting(settingName: string): Promise<null | PoapSetting> {
@@ -1085,15 +1120,17 @@ export function updateDelivery(
     headers: { 'Content-Type': 'application/json' },
   });
 }
+
 /* Websites */
 export type Website = {
-  claimName: string;
+  claim_name: string;
   active: boolean;
   captcha: boolean;
   created: string;
-  from?: string;
-  to?: string;
-  deliveriesCount?: {total: number, claimed: number};
+  from: string;
+  to: string;
+  event_id?: number;
+  deliveriesCount?: { total: number; claimed: number };
 };
 
 export interface PaginatedWebsites {
@@ -1124,20 +1161,32 @@ export function getWebsites(
     paramsObject['active'] = active;
   }
 
-  if(timeframe !== null){
+  if (timeframe !== null) {
     paramsObject['timeframe'] = timeframe;
   }
 
   const params = queryString.stringify(paramsObject);
-  return secureFetch(`${API_WEBSITES}/admin/claimName/all?${params}`);
+  return secureFetch(`${API_BASE}/websites?${params}`);
 }
 
-export function getWebsite(claimName: string ): Promise<Website> {
-  return secureFetch(`${API_WEBSITES}/admin/claimName/${claimName}`);
+export function getWebsiteByEventIdAndSecretCode(eventId: number, secret_code?: number): Promise<Website> {
+  const body = JSON.stringify(secret_code ? { secret_code } : {});
+  const payload: RequestInit = {
+    method: 'POST',
+    body,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  const url = `${API_BASE}/website/event/id/${eventId}`;
+
+  return authClient.isAuthenticated() ? secureFetch(url, payload) : fetchJson(url, payload);
+}
+
+export function getWebsiteByName(claimName: string): Promise<Website> {
+  return secureFetch(`${API_BASE}/website/${claimName}`);
 }
 
 export function getWebsiteClaimUrls(claimName: string, claimed?: boolean): Promise<WebsiteClaimUrl[]> {
-  if(claimed === true){
+  if (claimed === true) {
     return secureFetch(`${API_WEBSITES}/admin/delivery/claimed/${claimName}`);
   }
 
@@ -1145,75 +1194,68 @@ export function getWebsiteClaimUrls(claimName: string, claimed?: boolean): Promi
 }
 
 export async function createWebsite(
-  claimName: string,
-  claimUrls: string[],
+  event_id: number,
+  claim_name: string,
+  requested_codes: number,
   from?: string,
   to?: string,
   captcha?: boolean,
   active?: boolean,
+  secret_code?: number,
 ): Promise<Website> {
-
-  const createClaimName: Website = await secureFetch(`${API_WEBSITES}/admin/claimName`, {
-    method: 'POST',
-    body: JSON.stringify({
-      claimName,
-      from,
-      to,
-      captcha,
-      active,
-    }),
-    headers: { 'Content-Type': 'application/json' },
+  const body = JSON.stringify({
+    event_id,
+    secret_code,
+    claim_name,
+    requested_codes,
+    from,
+    to,
+    captcha,
+    active,
   });
 
-  if(claimUrls && claimUrls.length > 0)
-    await addURLsToWebsite(claimName, claimUrls);
-
-  return createClaimName;
-}
-
-function addURLsToWebsite(
-  claimName: string,
-  claimUrls?: string[],
-): Promise<WebsiteClaimUrl[]> {
-  return secureFetch(`${API_WEBSITES}/admin/delivery/add/${claimName}`, {
+  const payload: RequestInit = {
     method: 'POST',
-    body: JSON.stringify({
-      claimUrl: claimUrls,
-    }),
+    body,
     headers: { 'Content-Type': 'application/json' },
-  });
+  };
+
+  const url: string = `${API_BASE}/website-requests`;
+
+  return authClient.isAuthenticated() ? await secureFetch(url, payload) : await fetchJson(url, payload);
 }
 
 export async function updateWebsite(
-  prevClaimName: string,
-  claimName: string,
-  claimUrls: string[],
-  from?: string,
-  to?: string,
+  event_id: number,
+  claim_name: string,
+  from: string,
+  to: string,
   captcha?: boolean,
   active?: boolean,
+  secret_code?: number,
 ): Promise<Website> {
-  const updatedWebsite: Website = await secureFetch(`${API_WEBSITES}/admin/claimName/${prevClaimName}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      claimName,
-      from,
-      to,
-      captcha,
-      active,
-    }),
-    headers: { 'Content-Type': 'application/json' },
+  const body = JSON.stringify({
+    event_id,
+    claim_name,
+    from,
+    to,
+    captcha,
+    active,
+    secret_code,
   });
 
-  if(claimUrls && claimUrls.length > 0)
-    await addURLsToWebsite(claimName, claimUrls);
+  const payload: RequestInit = {
+    method: 'PUT',
+    body,
+    headers: { 'Content-Type': 'application/json' },
+  };
 
-  return updatedWebsite;
+  const url = `${API_BASE}/website-requests`;
+
+  return authClient.isAuthenticated() ? await secureFetch(url, payload) : await fetchJson(url, payload);
 }
 
-export async function deleteClaimUrl(
-  claimUrl: string,
-): Promise<Website> {
+export async function deleteClaimUrl(claimUrl: string): Promise<Website> {
   return secureFetch(`${API_WEBSITES}/admin/delivery/`, {
     method: 'DELETE',
     body: JSON.stringify({
@@ -1258,4 +1300,25 @@ async function tokensQuantityByEventIdAndSubgraphUrl(eventId: number, subgraphUr
   const count = (await fetchJson<TheGraphResponse<TheGraphDataTokensQuantity>>(subgraphUrl, request)).data.event
     ?.tokenCount;
   return count ? parseInt(count) : 0;
+}
+
+interface ValidateEventAndSecretCodeResponse {
+  valid: boolean;
+}
+
+export async function validateEventAndSecretCode(event_id: number, secret_code: number): Promise<boolean> {
+  try {
+    const ret = await fetchJson<ValidateEventAndSecretCodeResponse>(`${API_BASE}/event/validate`, {
+      method: 'POST',
+      body: JSON.stringify({
+        event_id,
+        secret_code,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    return ret && ret.valid;
+  } catch (e) {
+    return false;
+  }
 }

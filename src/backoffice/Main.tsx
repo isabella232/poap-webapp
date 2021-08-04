@@ -28,7 +28,7 @@ import { TemplateFormPage } from './templates/TemplateFormPage';
 import { Checkouts } from './Checkouts';
 import { Deliveries } from './Deliveries';
 import { AdminLogsPage } from './AdminLogsPage';
-import { Websites } from './Websites';
+import { WebsitesManage } from './Websites/WebsitesManage';
 
 export const MintersPage = () => <div> This is a MintersPage </div>;
 
@@ -48,10 +48,7 @@ const Label: React.FC<{ label: LabelProps }> = ({ label }) => {
   return <h2>{title}</h2>;
 };
 
-const SidebarLink: React.FC<{ route: RouteProps; handleClick: () => void }> = ({
-                                                                                 route,
-                                                                                 handleClick,
-                                                                               }) => {
+const SidebarLink: React.FC<{ route: RouteProps; handleClick: () => void }> = ({ route, handleClick }) => {
   const { path, title } = route;
   if (typeof route === 'object' && title) {
     return (
@@ -64,9 +61,7 @@ const SidebarLink: React.FC<{ route: RouteProps; handleClick: () => void }> = ({
   return null;
 };
 
-export const withAuthentication = <T extends Object>(
-  WrappedComponent: React.ComponentType<T>,
-): React.FC<T> => {
+export const withAuthentication = <T extends Object>(WrappedComponent: React.ComponentType<T>): React.FC<T> => {
   return (props: T) => {
     const isAuthenticated = authClient.isAuthenticated();
 
@@ -84,7 +79,7 @@ export const NavigationMenu = withRouter(({ history }) => {
 
   const isAdmin = authClient.isAuthenticated();
   return (
-    <Menu isOpen={isOpen} onStateChange={state => setIsOpen(state.isOpen)} right disableAutoFocus>
+    <Menu isOpen={isOpen} onStateChange={(state) => setIsOpen(state.isOpen)} right disableAutoFocus>
       {isAdmin && (
         <>
           <Label label={LABELS.issueBadges} />
@@ -105,18 +100,18 @@ export const NavigationMenu = withRouter(({ history }) => {
           <SidebarLink route={ROUTES.deliveries.admin} handleClick={closeMenu} />
 
           <SidebarLink route={ROUTES.adminLogs} handleClick={closeMenu} />
-
-          <SidebarLink route={ROUTES.websites.admin} handleClick={closeMenu} />
         </>
       )}
 
       {!isAdmin && <Label label={LABELS.menu} />}
 
+      <SidebarLink route={ROUTES.websites.websitesManage} handleClick={closeMenu} />
+
       <SidebarLink route={ROUTES.events} handleClick={closeMenu} />
 
-      <SidebarLink route={ROUTES.qr} handleClick={closeMenu} />
+      <SidebarLink route={ROUTES.codes} handleClick={closeMenu} />
 
-      {isAdmin && <SidebarLink route={ROUTES.qrRequest} handleClick={closeMenu} />}
+      {isAdmin && <SidebarLink route={ROUTES.codesRequest} handleClick={closeMenu} />}
 
       <SidebarLink route={ROUTES.template} handleClick={closeMenu} />
 
@@ -147,12 +142,12 @@ const Landing = () => {
       </Link>
       {isAdmin && (
         <>
-          <Link to={ROUTES.qr.path} className={'card card-link'}>
-            <h3>Manage QR Codes</h3>
+          <Link to={ROUTES.codes.path} className={'card card-link'}>
+            <h3>Manage Codes</h3>
             <img className={'icon'} src={Qr} alt={'Manage QR Codes'} />
           </Link>
-          <Link to={ROUTES.qrRequest.path} className={'card card-link'}>
-            <h3>Manage QR Requests</h3>
+          <Link to={ROUTES.codesRequest.path} className={'card card-link'}>
+            <h3>Manage Codes Requests</h3>
             <img className={'icon'} src={Requests} alt={'Manage QR Requests'} />
           </Link>
         </>
@@ -171,7 +166,6 @@ const AddressManagementPageWithAuthentication = withAuthentication(AddressManage
 const CheckoutsWithAuthentication = withAuthentication(Checkouts);
 const DeliveriesWithAuthentication = withAuthentication(Deliveries);
 const AdminLogsPageWithAuthentication = withAuthentication(AdminLogsPage);
-const WebsitesWithAuthentication = withAuthentication(Websites);
 
 export const BackOffice: React.FC = () => (
   <>
@@ -190,9 +184,9 @@ export const BackOffice: React.FC = () => (
     <main className="app-content backoffice">
       <div className="container">
         <Switch>
-          <Route exact path={ROUTES.qr.path} render={() => <QrPage />} />
+          <Route exact path={ROUTES.codes.path} render={() => <QrPage />} />
 
-          <Route exact path={ROUTES.qrRequest.path} render={() => <QrRequestsWithAuthentication />} />
+          <Route exact path={ROUTES.codesRequest.path} render={() => <QrRequestsWithAuthentication />} />
 
           <Route path={ROUTES.events.path} render={() => <EventsPage />} />
 
@@ -226,7 +220,7 @@ export const BackOffice: React.FC = () => (
 
           <Route exact path={ROUTES.adminLogs.path} render={() => <AdminLogsPageWithAuthentication />} />
 
-          <Route path={ROUTES.websites.admin.path} render={() => <WebsitesWithAuthentication />} />
+          <Route path={ROUTES.websites.websitesManage.path} render={() => <WebsitesManage />} />
 
           <Route path="*" render={() => <Redirect to="/admin" />} />
         </Switch>

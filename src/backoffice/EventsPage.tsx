@@ -37,7 +37,7 @@ import {
   Template,
   PoapFullEvent,
   PoapEvent,
-  getEvent,
+  getEventByFancyId,
   getEventById,
   getEvents,
   updateEvent,
@@ -71,7 +71,9 @@ type EventEditValues = {
 type QrRequestModalProps = {
   handleModalClose: () => void;
   setIsActiveQrRequest: (id: number) => void;
-  event: PoapFullEvent | undefined;
+  eventId?: number;
+  secretCode?: number;
+  isWebsitesRequest: boolean;
 };
 
 type QrRequestFormikValues = {
@@ -153,15 +155,15 @@ export const EditEventForm: React.FC<RouteComponentProps<{
 
   useEffect(() => {
     const fn = async () => {
-      setLoading(true)
+      setLoading(true);
       let event = null;
       if (isNaN(+match.params.eventId)) {
-        event = await getEvent(match.params.eventId);
+        event = await getEventByFancyId(match.params.eventId);
       } else {
-        event = await getEventById(match.params.eventId);
+        event = await getEventById(+match.params.eventId);
       }
       setEvent(event);
-      setLoading(false)
+      setLoading(false);
     };
     fn();
   }, [location, match]);
@@ -442,7 +444,7 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
               ) : (
                 <>
                   <div className="event-top-bar-container">
-                    <h2 className="margin-0">  
+                    <h2 className="margin-0">
                       #{event!.id} - {event!.name} - {event!.year}
                     </h2>
                     <div className="right_content">
@@ -479,9 +481,10 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
                     style={{ content: { overflow: 'visible' } }}
                   >
                     <QrRequestModal
-                      event={event}
+                      eventId={event?.id}
                       handleModalClose={handleQrRequestModalRequestClose}
                       setIsActiveQrRequest={checkActiveQrRequest}
+                      isWebsitesRequest={false}
                     />
                   </ReactModal>
                 </>
@@ -638,22 +641,28 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
   );
 };
 
-const QrRequestModal: React.FC<QrRequestModalProps> = ({ handleModalClose, event, setIsActiveQrRequest }) => {
+export const QrRequestModal: React.FC<QrRequestModalProps> = ({
+  eventId,
+  secretCode,
+  handleModalClose,
+  setIsActiveQrRequest,
+  isWebsitesRequest,
+}) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { addToast } = useToasts();
 
   const handleQrRequestSubmit = async (values: QrRequestFormikValues) => {
     setIsSubmitting(true);
     const { requested_codes, secret_code } = values;
-    if (event) {
-      await postQrRequests(event.id, requested_codes, secret_code)
+    if (eventId) {
+      await postQrRequests(eventId, requested_codes, secret_code, isWebsitesRequest)
         .then((_) => {
           setIsSubmitting(false);
           addToast('QR Request created correctly', {
             appearance: 'success',
             autoDismiss: true,
           });
-          setIsActiveQrRequest(event.id);
+          setIsActiveQrRequest(eventId);
           handleModalClose();
         })
         .catch((e) => {
@@ -687,7 +696,7 @@ const QrRequestModal: React.FC<QrRequestModalProps> = ({ handleModalClose, event
     <Formik
       initialValues={{
         requested_codes: 0,
-        secret_code: event?.secret_code ? event?.secret_code : 0,
+        secret_code: secretCode ? secretCode : 0,
       }}
       validationSchema={PoapQrRequestSchema}
       validateOnBlur={false}
