@@ -155,12 +155,12 @@
 
     .brandings {
       text-align: center;
-      span {
-          text-align: center;
-          padding: 5px;
-          img {
-              width: 150px;
-          }
+      padding: 20px 0;
+      .branding {
+        padding: 0 0.25rem;
+        img {
+          width: 150px;
+        }
       }
   }
 
@@ -356,7 +356,7 @@
       background: none;
       position: relative;
 
-      .side-banner{
+      .side-banner {
         z-index: 2;
       }
 
@@ -850,7 +850,6 @@
   }
 }
 
-
 /* ******************************************************
   Token Page
   ****************************************************** */
@@ -865,7 +864,7 @@
     width: 100%;
     border-top: 1px solid $color-grey;
   }
-  p{
+  p {
     text-align: center;
 
     &.success {
@@ -881,4 +880,3 @@
     }
   }
 }
-
