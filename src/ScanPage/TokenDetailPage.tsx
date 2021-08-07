@@ -194,6 +194,17 @@ export const TokenDetailPage: React.FC<RouteComponentProps<{
     address = ens.ens;
   }
 
+  const getMessageByLayer = (layer: string): string => {
+    let message = '';
+    const messageCases = {
+      layer1: 'This POAP is currently on mainnet and it can be migrated to xDAI',
+      layer2: 'This POAP is currently on xDAI and it can be migrated to mainnet and Celo',
+      layer3: 'This POAP is currently on Celo and it can be migrated to xDAI',
+    };
+    message = (messageCases as any)[layer.toLowerCase()];
+    return message;
+  };
+
   return (
     <>
       <div className="header-events token-page">
@@ -223,7 +234,7 @@ export const TokenDetailPage: React.FC<RouteComponentProps<{
           <div className="container claim-info">
             <div className="content-event">
               <h2>Collection</h2>
-              <p className={`wallet-number ${(ens && ens.valid) ? "ens":""}`}>
+              <p className={`wallet-number ${ens && ens.valid ? 'ens' : ''}`}>
                 <Link to={`/scan/${address}`}>{address}</Link>
               </p>
               <h2>Brog on the interwebz</h2>
@@ -250,18 +261,22 @@ export const TokenDetailPage: React.FC<RouteComponentProps<{
               </ul>
             </div>
             <div className={'migration-section'}>
-              {layer === LAYERS.layer2 && !migrationFinished && !txHash && (
-                <>
-                  <div className={'divider'} />
-                  <p>This POAP is currently on xDAI and it can be migrated to mainnet</p>
-                  <div>
-                    <form onSubmit={submitMigration}>
-                      <SubmitButton text={'Migrate POAP'} isSubmitting={migrateInProcess} canSubmit={true} />
-                    </form>
-                  </div>
-                </>
+              {(layer === LAYERS.layer1 || layer === LAYERS.layer2 || layer === LAYERS.layer3) &&
+                !migrationFinished &&
+                !txHash && (
+                  <>
+                    <div className={'divider'} />
+                    <p>{getMessageByLayer(layer)}</p>
+                    <div>
+                      <form onSubmit={submitMigration}>
+                        <SubmitButton text={'Migrate POAP'} isSubmitting={migrateInProcess} canSubmit={true} />
+                      </form>
+                    </div>
+                  </>
+                )}
+              {(layer === LAYERS.layer1 || layer === LAYERS.layer2 || layer === LAYERS.layer3) && migrationFinished && (
+                <p className={'success'}>POAP migrated successfully!</p>
               )}
-              {layer === LAYERS.layer2 && migrationFinished && <p className={'success'}>POAP migrated successfully!</p>}
               {txHash && <TxDetail hash={txHash} receipt={txReceipt} />}
               {txReceipt && !txReceipt.status && (
                 <>
