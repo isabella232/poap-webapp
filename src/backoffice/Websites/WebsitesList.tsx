@@ -15,10 +15,8 @@ import ReactModal from 'react-modal';
 import { ReactComponent as EditIcon } from '../../images/edit.svg';
 import checked from '../../images/checked.svg';
 import error from '../../images/error.svg';
-import { format } from 'date-fns';
-import { Form, Formik } from 'formik';
-import FilterReactSelect from '../../components/FilterReactSelect';
-import { OptionTypeBase } from 'react-select';
+import { format, parse } from 'date-fns';
+import { EventSecretCodeForm } from './EventSecretCodeForm';
 
 /* Types */
 type PaginateAction = {
@@ -41,7 +39,7 @@ const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
   const [isFetching, setIsFetching] = useState<null | boolean>(null);
   const [isEventIdModalOpen, setIsEventIdModalOpen] = useState<boolean>(false);
   const [isFetchingEvent, setIsFetchingEvent] = useState<boolean>(false);
-  const [eventIdModalError, setEventIdModalError] = useState<boolean>(false);
+  const [eventIdModalError, setEventIdModalError] = useState<string | undefined>(undefined);
   const [events, setEvents] = useState<PoapEvent[]>([]);
 
   const { addToast } = useToasts();
@@ -81,7 +79,7 @@ const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
 
   const fetchEvents = async (): Promise<void> => {
     setIsFetchingEvent(true);
-    const _events = await getEvents();
+    const _events = await getEvents(false);
     setEvents(_events);
     setIsFetchingEvent(false);
   };
@@ -108,20 +106,29 @@ const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
 
   const handleEventIdModalSubmit = async (eventId: number): Promise<void> => {
     setIsFetchingEvent(true);
-    setEventIdModalError(false);
+    setEventIdModalError(undefined);
 
     try {
       const event = await getEventById(eventId);
 
       if (event) {
+        if (event.expiry_date) {
+          const expirationDate = parse(event.expiry_date, 'dd-MMM-yyyy', new Date());
+          if (new Date().getTime() > expirationDate.getTime()) {
+            setIsFetchingEvent(false);
+            setEventIdModalError('the event is expired');
+            return;
+          }
+        }
+
         onCreateNew(event);
       } else {
         setIsFetchingEvent(false);
-        setEventIdModalError(true);
+        setEventIdModalError('invalid event or secret code');
       }
     } catch (e) {
       setIsFetchingEvent(false);
-      setEventIdModalError(true);
+      setEventIdModalError('invalid event or secret code');
     }
   };
 
@@ -164,11 +171,11 @@ const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
         shouldCloseOnOverlayClick={true}
         style={{ content: { overflow: 'visible' } }}
       >
-        <EventIdModal
+        <EventSecretCodeForm
           onSubmit={handleEventIdModalSubmit}
+          events={events}
           error={eventIdModalError}
           loading={isFetchingEvent}
-          events={events}
         />
       </ReactModal>
       {/*End Modals*/}
@@ -294,64 +301,6 @@ const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
         </div>
       )}
     </div>
-  );
-};
-
-// authentication modal
-type EventIdModalProps = {
-  onSubmit: (eventId: number) => void;
-  error: boolean;
-  loading: boolean;
-  events: PoapEvent[];
-};
-
-type EventIdFormikValues = {
-  eventId: number;
-};
-
-const EventIdModal: React.FC<EventIdModalProps> = ({ onSubmit, error, loading, events }) => {
-  const handleAuthenticationModalSubmit = async (values: EventIdFormikValues, props: any) => {
-    props.resetForm();
-    onSubmit(values.eventId);
-  };
-
-  const eventOptions = () => {
-    return events.map((event) => {
-      const label = `${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
-      return { value: event.id, label: label, start_date: event.start_date };
-    });
-  };
-
-  return (
-    <Formik
-      initialValues={{
-        eventId: 0,
-      }}
-      validateOnBlur={false}
-      validateOnChange={false}
-      onSubmit={handleAuthenticationModalSubmit}
-    >
-      {({ values }) => {
-        return (
-          <Form className={'authentication-modal-container'}>
-            {loading ? (
-              <Loading />
-            ) : (
-              <FilterReactSelect
-                options={eventOptions()}
-                placeholder={'Select Event'}
-                onChange={(option: OptionTypeBase) => {
-                  values.eventId = option.value;
-                }}
-              />
-            )}
-            <button className="filter-base filter-button" type="submit" disabled={loading} style={{ width: '100%' }}>
-              Submit
-            </button>
-          </Form>
-        );
-      }}
-    </Formik>
   );
 };
 

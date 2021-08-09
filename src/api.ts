@@ -431,8 +431,9 @@ export function getTokenInfo(tokenId: string): Promise<TokenInfo> {
   return fetchJson(`${API_BASE}/token/${tokenId}`);
 }
 
-export async function getEvents(): Promise<PoapEvent[]> {
-  return authClient.isAuthenticated() ? secureFetch(`${API_BASE}/events`) : fetchJson(`${API_BASE}/events`);
+export async function getEvents(expired?: boolean): Promise<PoapEvent[]> {
+  const url = `${API_BASE}/events?${queryString.stringify({ expired })}`;
+  return authClient.isAuthenticated() ? secureFetch(url) : fetchJson(url);
 }
 
 export async function getQrRequests(

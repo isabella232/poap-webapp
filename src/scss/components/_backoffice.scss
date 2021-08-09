@@ -882,9 +882,7 @@
 }
 
 .rselect {
-  div {
-    color: $color-primary !important;
-  }
+  color: $color-primary;
 
   input {
     height: auto;

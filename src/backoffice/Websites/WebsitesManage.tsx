@@ -1,18 +1,16 @@
 import React, { FC, useEffect, useState } from 'react';
-import { getEvents, PoapEvent, validateEventAndSecretCode } from '../../api';
-import { Field, Form, Formik } from 'formik';
+import { getEventById, getEvents, PoapEvent, validateEventAndSecretCode } from '../../api';
 import { authClient } from '../../auth';
 import ReactModal from 'react-modal';
 import WebsiteForm from './WebsiteForm';
 import WebsitesList from './WebsitesList';
-import { Loading } from '../../components/Loading';
-import FilterReactSelect from '../../components/FilterReactSelect';
-import { OptionTypeBase } from 'react-select';
+import { EventSecretCodeForm } from './EventSecretCodeForm';
+import { parse } from 'date-fns';
 
 const WebsitesManage: FC = () => {
   const [isAuthenticationModalOpen, setIsAuthenticationModalOpen] = useState<boolean>(true);
   const [isLoadingAuth, setIsLoadingAuth] = useState<boolean>(false);
-  const [authError, setAuthError] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | undefined>(undefined);
   const [eventId, setEventId] = useState<number | undefined>(undefined);
   const [event, setEvent] = useState<PoapEvent | undefined>(undefined);
   const [secretCode, setSecretCode] = useState<number | undefined>(undefined);
@@ -30,28 +28,48 @@ const WebsitesManage: FC = () => {
 
   const fetchEvents = async (): Promise<void> => {
     setIsLoadingAuth(true);
-    const _events = await getEvents();
+    const _events = await getEvents(false);
     setEvents(_events);
     setIsLoadingAuth(false);
   };
 
-  const handleAuthenticationSubmit = async (eventId: number, secretCode: string): Promise<void> => {
+  const handleAuthenticationSubmit = async (eventId: number, secretCode?: number): Promise<void> => {
     setIsLoadingAuth(true);
-    try {
-      const secretCodeNumber = parseInt(secretCode);
 
-      const isValid = await validateEventAndSecretCode(eventId, secretCodeNumber);
+    if (!secretCode) {
+      setAuthError('please enter a valid edit code');
+      setIsLoadingAuth(false);
+      return;
+    }
+
+    try {
+      const isValid = await validateEventAndSecretCode(eventId, secretCode);
 
       if (isValid) {
+        const event = await getEventById(eventId);
+
+        if (event) {
+          if (event.expiry_date) {
+            const expirationDate = parse(event.expiry_date, 'dd-MMM-yyyy', new Date());
+            if (new Date().getTime() > expirationDate.getTime()) {
+              setAuthError('the event is expired');
+              setIsLoadingAuth(false);
+              return;
+            }
+          }
+
+          setEvent(event);
+        }
+
         setIsAuthenticationModalOpen(false);
-        setSecretCode(secretCodeNumber);
+        setSecretCode(secretCode);
         setEventId(eventId);
       } else {
-        setAuthError(true);
+        setAuthError('event or edit code is invalid');
         setIsLoadingAuth(false);
       }
     } catch (e) {
-      setAuthError(true);
+      setAuthError('event or edit code is invalid');
       setIsLoadingAuth(false);
     }
   };
@@ -70,11 +88,12 @@ const WebsitesManage: FC = () => {
         shouldCloseOnEsc={false}
         shouldCloseOnOverlayClick={false}
       >
-        <AuthenticationModal
-          authenticationError={authError}
+        <EventSecretCodeForm
+          error={authError}
           onSubmit={handleAuthenticationSubmit}
           loading={isLoadingAuth}
           events={events}
+          askSecretCode={true}
         />
       </ReactModal>
       {/*End Modals*/}
@@ -83,80 +102,6 @@ const WebsitesManage: FC = () => {
       )}
       {eventId && <WebsiteForm eventId={eventId} secretCode={secretCode} maybeEvent={event} />}
     </div>
-  );
-};
-
-// authentication modal
-type AuthenticationModalProps = {
-  onSubmit: (eventId: number, secretCode: string) => void;
-  authenticationError: boolean;
-  loading: boolean;
-  events: PoapEvent[];
-};
-
-type AuthenticationModalFormikValues = {
-  secretCode: string;
-  eventId: number;
-};
-
-const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
-  onSubmit,
-  authenticationError,
-  loading,
-  events,
-}) => {
-  const handleAuthenticationModalSubmit = (values: AuthenticationModalFormikValues, props: any) => {
-    onSubmit(values.eventId, values.secretCode);
-    props.resetForm();
-  };
-
-  const eventOptions = () => {
-    return events.map((event) => {
-      const label = `${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
-      return { value: event.id, label: label, start_date: event.start_date };
-    });
-  };
-
-  return (
-    <Formik
-      initialValues={{
-        secretCode: '',
-        eventId: 0,
-      }}
-      validateOnBlur={false}
-      validateOnChange={false}
-      onSubmit={handleAuthenticationModalSubmit}
-    >
-      {({ values }) => {
-        return (
-          <Form className={'authentication-modal-container'}>
-            {loading && <Loading />}
-            {!loading && (
-              <>
-                <FilterReactSelect
-                  options={eventOptions()}
-                  placeholder={'Select Event'}
-                  onChange={(option: OptionTypeBase) => {
-                    values.eventId = option.value;
-                  }}
-                />
-                <Field
-                  id={'secretCode'}
-                  name={'secretCode'}
-                  type={'number'}
-                  className={'field ' + (authenticationError ? 'modal-input-error' : '')}
-                  placeholder={authenticationError ? 'The Edit Code entered is invalid' : 'Edit Code'}
-                  style={{ paddingTop: '18px' }}
-                />
-              </>
-            )}
-            <button className="filter-base filter-button" style={{ width: '100%' }} type="submit" disabled={loading}>
-              Submit Authentication
-            </button>
-          </Form>
-        );
-      }}
-    </Formik>
   );
 };
 
