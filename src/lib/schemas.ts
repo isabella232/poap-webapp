@@ -150,8 +150,7 @@ const PoapEventSchema = yup.object().shape({
     .required('The secret code is required')
     .matches(/^[0-9]{6}$/, 'Must be exactly 6 digits'),
   email: yup.string().email('An email is required'),
-  requested_codes: yup
-  .number()
+  requested_codes: yup.number(),
 });
 
 const PoapEventSchemaEdit = yup.object().shape({
@@ -188,8 +187,7 @@ const PoapQrRequestSchema = yup.object().shape({
     .string()
     .required('The secret code is required')
     .matches(/^[0-9]{6}$/, 'Must be exactly 6 digits'),
-  requested_codes: yup
-  .number()
+  requested_codes: yup.number(),
 });
 
 const IssueForEventFormValueSchema = yup.object().shape({
@@ -274,10 +272,16 @@ const WebsiteSchema = yup.object().shape({
     .required('A unique name is required')
     .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Must be URL friendly. No spaces, only ASCII')
     .max(100, 'The event name should be less than 100 characters'),
-  from: yup.string(),
-  to: yup.string(),
+  start_date: yup.string().required('from date is required'),
+  start_time: yup.string().required('a start time is required'),
+  end_date: yup.string().required('to date is required'),
+  end_time: yup.string().required('an end time is required'),
   captcha: yup.boolean(),
   active: yup.boolean(),
+  codesQuantity: yup
+    .number()
+    .required('A positive amount of codes is required')
+    .positive('the amount of requested codes must be greater than zero'),
 });
 
 export {
@@ -298,5 +302,5 @@ export {
   CheckoutSchema,
   DeliverySchema,
   WebsiteSchema,
-  PoapQrRequestSchema
+  PoapQrRequestSchema,
 };

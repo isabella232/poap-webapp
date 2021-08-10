@@ -65,6 +65,7 @@ const QrRequests: FC = () => {
   const [selectedQrRequest, setSelectedQrRequest] = useState<undefined | QrRequest>(undefined);
   const [events, setEvents] = useState<PoapEvent[]>([]);
   const [sortCondition, setSortCondition] = useState<undefined | SortCondition>(undefined);
+  const [type, setType] = useState<string | undefined>(undefined);
   const width = useWindowWidth();
 
   useEffect(() => {
@@ -78,8 +79,8 @@ const QrRequests: FC = () => {
 
   useEffect(() => {
     setPage(0);
-    fetchQrRequests();
-  }, [selectedEvent, reviewedStatus, limit, sortCondition]); /* eslint-disable-line react-hooks/exhaustive-deps */
+    fetchQrRequests().then();
+  }, [selectedEvent, reviewedStatus, limit, sortCondition, type]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   const fetchQrRequests = async () => {
     setIsFetchingQrCodes(true);
@@ -91,7 +92,21 @@ const QrRequests: FC = () => {
 
     if (reviewedStatus) _status = reviewedStatus === 'reviewed';
 
-    const response = await getQrRequests(limit, page * limit, _status, event_id, sortCondition);
+    let website_request: boolean | undefined;
+
+    switch (type) {
+      case 'website':
+        website_request = true;
+        break;
+      case 'qr':
+        website_request = false;
+        break;
+      default:
+        website_request = undefined;
+        break;
+    }
+
+    const response = await getQrRequests(limit, page * limit, _status, event_id, sortCondition, website_request);
     const { qr_requests, total } = response;
 
     setTotal(total);
@@ -162,17 +177,23 @@ const QrRequests: FC = () => {
         event: request.event,
         organizer: request.event.email,
         created_date: formatDate(request.created_date),
-        reviewed_date: request.reviewed ? formatDate(request.reviewed_date) : '-',
+        reviewed_date: request.reviewed_date ? formatDate(request.reviewed_date) : '-',
         reviewed_by: request.reviewed ? request.reviewed_by : '-',
         reviewed: request.reviewed,
         amount: `${request.accepted_codes} / ${request.requested_codes}`,
+        website_request: request.website_request,
       };
     });
   };
 
+  const handleTypeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
+    const { value } = e.target;
+    setType(value);
+  };
+
   return (
     <div className={'admin-table qr'}>
-      <h2>Manage QR Requests</h2>
+      <h2>Manage Codes Requests</h2>
       <div className={'filters-container qr'}>
         <div className={'filter col-md-4'}>
           <div className="filter-option">
@@ -187,6 +208,13 @@ const QrRequests: FC = () => {
               <option value="false">Not Reviewed</option>
             </FilterSelect>
           </div>
+        </div>
+        <div className={'filter col-xs-6 col-md-3'}>
+          <FilterSelect handleChange={handleTypeChange}>
+            <option value="">Filter by type</option>
+            <option value="website">Website Requests</option>
+            <option value="qr">QR Requests</option>
+          </FilterSelect>
         </div>
         <ReactModal
           isOpen={isCreationModalOpen}
@@ -384,6 +412,7 @@ interface QrRequestTableData {
   reviewed_by?: string;
   reviewed_date?: string;
   reviewed: boolean;
+  website_request: boolean;
 }
 
 type QrRequestTableProps = {
@@ -449,6 +478,12 @@ const QrRequestTable: React.FC<QrRequestTableProps> = ({ data, onEdit, onSortCha
             <ReviewedIcon reviewed={value} />
           </div>
         ),
+        disableSortBy: true,
+      },
+      {
+        Header: 'Type',
+        accessor: 'website_request',
+        Cell: ({ value }) => <div className={'center'}>{value ? 'website' : 'qr'}</div>,
         disableSortBy: true,
       },
       {
@@ -553,7 +588,7 @@ const EventSubComponent: React.FC<EventSubComponentProps> = ({ event, reviewed_b
         {dateFormatter(event.expiry_date)}
       </h4>
       <img src={event.image_url} style={{ maxWidth: '100px', paddingBottom: '5px' }} alt={'event'} />
-      <div style={{ textAlign: 'center' }}>{event.description}</div>
+      <div style={{ textAlign: 'center', overflowWrap: 'break-word', whiteSpace: 'normal' }}>{event.description}</div>
       <div style={{ textAlign: 'center' }}>Reviewed by: {reviewed_by}</div>
     </div>
   );

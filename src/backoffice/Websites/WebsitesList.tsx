@@ -1,29 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { FC, useEffect, useState } from 'react';
 import { useToasts } from 'react-toast-notifications';
 
 /* Helpers */
-import { getWebsites, Website } from '../../api';
-import { ROUTES } from '../../lib/constants';
+import { getEventById, getEvents, getWebsiteByName, getWebsites, PoapEvent, Website } from '../../api';
 
 /* Components */
 import { Loading } from '../../components/Loading';
 import FilterButton from '../../components/FilterButton';
 import FilterSelect from '../../components/FilterSelect';
 import ReactPaginate from 'react-paginate';
+import ReactModal from 'react-modal';
 
 /* Assets */
 import { ReactComponent as EditIcon } from '../../images/edit.svg';
 import checked from '../../images/checked.svg';
 import error from '../../images/error.svg';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
+import { EventSecretCodeForm } from './EventSecretCodeForm';
 
 /* Types */
 type PaginateAction = {
   selected: number;
 };
 
-const WebsitesList = () => {
+type WebsitesListProps = {
+  onCreateNew: (event: PoapEvent) => void;
+  onEdit: (event: PoapEvent) => void;
+};
+
+const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
   /* State */
   const [page, setPage] = useState<number>(0);
   const [total, setTotal] = useState<number>(0);
@@ -32,17 +37,26 @@ const WebsitesList = () => {
   const [timeframe, setTimeframe] = useState<string | null>(null);
   const [websites, setWebsites] = useState<Website[]>([]);
   const [isFetching, setIsFetching] = useState<null | boolean>(null);
+  const [isEventIdModalOpen, setIsEventIdModalOpen] = useState<boolean>(false);
+  const [isFetchingEvent, setIsFetchingEvent] = useState<boolean>(false);
+  const [eventIdModalError, setEventIdModalError] = useState<string | undefined>(undefined);
+  const [events, setEvents] = useState<PoapEvent[]>([]);
 
   const { addToast } = useToasts();
 
   /* Effects */
   useEffect(() => {
-    if (websites.length > 0) fetchWebsites();
+    fetchEvents().then();
+  }, []);
+
+  useEffect(() => {
+    if (websites.length > 0) fetchWebsites().then();
   }, [page]); /* eslint-disable-line react-hooks/exhaustive-deps */
+
   useEffect(() => {
     setPage(0);
-    fetchWebsites();
-  }, [activeStatus,timeframe, limit]); /* eslint-disable-line react-hooks/exhaustive-deps */
+    fetchWebsites().then();
+  }, [activeStatus, timeframe, limit]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   /* Data functions */
   const fetchWebsites = async () => {
@@ -61,6 +75,13 @@ const WebsitesList = () => {
     } finally {
       setIsFetching(false);
     }
+  };
+
+  const fetchEvents = async (): Promise<void> => {
+    setIsFetchingEvent(true);
+    const _events = await getEvents(false);
+    setEvents(_events);
+    setIsFetchingEvent(false);
   };
 
   /* UI Handlers */
@@ -83,6 +104,48 @@ const WebsitesList = () => {
 
   const handlePageChange = (obj: PaginateAction) => setPage(obj.selected);
 
+  const handleEventIdModalSubmit = async (eventId: number): Promise<void> => {
+    setIsFetchingEvent(true);
+    setEventIdModalError(undefined);
+
+    try {
+      const event = await getEventById(eventId);
+
+      if (event) {
+        if (event.expiry_date) {
+          const expirationDate = parse(event.expiry_date, 'dd-MMM-yyyy', new Date());
+          if (new Date().getTime() > expirationDate.getTime()) {
+            setIsFetchingEvent(false);
+            setEventIdModalError('the event is expired');
+            return;
+          }
+        }
+
+        onCreateNew(event);
+      } else {
+        setIsFetchingEvent(false);
+        setEventIdModalError('invalid event or secret code');
+      }
+    } catch (e) {
+      setIsFetchingEvent(false);
+      setEventIdModalError('invalid event or secret code');
+    }
+  };
+
+  const handleEditOnClick = async (claimName: string): Promise<void> => {
+    setIsFetching(true);
+    const website = await getWebsiteByName(claimName);
+    if (website.event_id) {
+      const event = await getEventById(website.event_id);
+      setIsFetching(false);
+      if (event) {
+        onEdit(event);
+      }
+    } else {
+      setIsFetching(false);
+    }
+  };
+
   const tableHeaders = (
     <div className={'row table-header visible-md'}>
       <div className={'col-md-4 col-xs-3 '}>ClaimName</div>
@@ -97,6 +160,25 @@ const WebsitesList = () => {
 
   return (
     <div className={'admin-table websites'}>
+      {/*Modals*/}
+      <ReactModal
+        isOpen={isEventIdModalOpen}
+        onRequestClose={() => {
+          setIsEventIdModalOpen(false);
+        }}
+        shouldFocusAfterRender={true}
+        shouldCloseOnEsc={true}
+        shouldCloseOnOverlayClick={true}
+        style={{ content: { overflow: 'visible' } }}
+      >
+        <EventSecretCodeForm
+          onSubmit={handleEventIdModalSubmit}
+          events={events}
+          error={eventIdModalError}
+          loading={isFetchingEvent}
+        />
+      </ReactModal>
+      {/*End Modals*/}
       <h2>Websites</h2>
       <div className="filters-container websites">
         <div className={'filter col-md-4 col-xs-12'}>
@@ -120,9 +202,12 @@ const WebsitesList = () => {
         </div>
         <div className={'col-md-2'} />
         <div className={'filter col-md-3 col-xs-6 new-button'}>
-          <Link to={ROUTES.websites.newForm.path}>
-            <FilterButton text="Create new" />
-          </Link>
+          <FilterButton
+            text="Create new"
+            handleClick={() => {
+              setIsEventIdModalOpen(true);
+            }}
+          />
         </div>
       </div>
       <div className={'secondary-filters'}>
@@ -150,20 +235,20 @@ const WebsitesList = () => {
           <div className={'admin-table-row website-table'}>
             {websites.map((website, i) => {
               return (
-                <div className={`row ${i % 2 === 0 ? 'even' : 'odd'}`} key={website.claimName}>
+                <div className={`row ${i % 2 === 0 ? 'even' : 'odd'}`} key={i}>
                   <div className={'col-md-4 col-xs-12 ellipsis'}>
                     <span className={'visible-sm'}>Claim Name: </span>
-                    {website.claimName}
+                    {website.claim_name}
                   </div>
 
                   <div className={'col-md-2 col-xs-12 ellipsis'}>
                     <span className={'visible-sm'}>Start Date: </span>
-                    {website.from? format(new Date(website.from), 'MM-dd-yyyy HH:MM') : '-'}
+                    {website.from ? format(new Date(website.from), 'MM-dd-yyyy HH:MM') : '-'}
                   </div>
 
                   <div className={'col-md-2 col-xs-12 ellipsis'}>
                     <span className={'visible-sm'}>End Date: </span>
-                    {website.to? format(new Date(website.to), 'MM-dd-yyyy HH:MM') : '-'}
+                    {website.to ? format(new Date(website.to), 'MM-dd-yyyy HH:MM') : '-'}
                   </div>
 
                   <div className={'col-md-1 col-xs-12 ellipsis center'}>
@@ -190,11 +275,13 @@ const WebsitesList = () => {
                   </div>
 
                   <div className={'col-md-1 col-xs-1 center event-edit-icon-container'}>
-                    <Link to={`/admin/websites/edit/${website.claimName}`}>
-                      <EditIcon />
-                    </Link>
+                    <EditIcon
+                      onClick={async () => {
+                        await handleEditOnClick(website.claim_name);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
                   </div>
-
                 </div>
               );
             })}
