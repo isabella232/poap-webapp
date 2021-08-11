@@ -450,6 +450,14 @@ textarea {
 
   &.creation-modal {
     justify-content: space-between;
+    margin-left: 20%;
+    @media (min-width: $bp-l) {
+      margin-left: 50%;
+    }
+    .btn {
+      width: auto;
+      max-width: 180px;
+    }
   }
 
   button {

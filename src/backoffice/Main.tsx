@@ -28,6 +28,7 @@ import { TemplateFormPage } from './templates/TemplateFormPage';
 import { Checkouts } from './Checkouts';
 import { Deliveries } from './Deliveries';
 import { AdminLogsPage } from './AdminLogsPage';
+import { DeliveriesRequests } from './DeliveriesRequests';
 import { WebsitesManage } from './Websites/WebsitesManage';
 
 export const MintersPage = () => <div> This is a MintersPage </div>;
@@ -97,8 +98,6 @@ export const NavigationMenu = withRouter(({ history }) => {
 
           <SidebarLink route={ROUTES.checkouts.admin} handleClick={closeMenu} />
 
-          <SidebarLink route={ROUTES.deliveries.admin} handleClick={closeMenu} />
-
           <SidebarLink route={ROUTES.adminLogs} handleClick={closeMenu} />
         </>
       )}
@@ -110,6 +109,10 @@ export const NavigationMenu = withRouter(({ history }) => {
       <SidebarLink route={ROUTES.events} handleClick={closeMenu} />
 
       <SidebarLink route={ROUTES.codes} handleClick={closeMenu} />
+
+      <SidebarLink route={ROUTES.deliveries.admin} handleClick={closeMenu} />
+      {isAdmin && <SidebarLink route={ROUTES.deliveries.requests} handleClick={closeMenu} />}
+
 
       {isAdmin && <SidebarLink route={ROUTES.codesRequest} handleClick={closeMenu} />}
 
@@ -150,6 +153,10 @@ const Landing = () => {
             <h3>Manage Codes Requests</h3>
             <img className={'icon'} src={Requests} alt={'Manage QR Requests'} />
           </Link>
+          <Link to={ROUTES.deliveries.requests.path} className={'card card-link'}>
+            <h3>Manage Deliveries Requests</h3>
+            <img className={'icon'} src={Requests} alt={'Manage Deliveries Requests'} />
+          </Link>
         </>
       )}
     </div>
@@ -160,11 +167,11 @@ const IssueForEventPageWithAuthentication = withAuthentication(IssueForEventPage
 const IssueForUserPageWithAuthentication = withAuthentication(IssueForUserPage);
 const TransactionsPageWithAuthentication = withAuthentication(TransactionsPage);
 const QrRequestsWithAuthentication = withAuthentication(QrRequests);
+const DeliveriesRequestsWithAuthentication = withAuthentication(DeliveriesRequests);
 const MintersPageWithAuthentication = withAuthentication(MintersPage);
 const BurnPageWithAuthentication = withAuthentication(BurnPage);
 const AddressManagementPageWithAuthentication = withAuthentication(AddressManagementPage);
 const CheckoutsWithAuthentication = withAuthentication(Checkouts);
-const DeliveriesWithAuthentication = withAuthentication(Deliveries);
 const AdminLogsPageWithAuthentication = withAuthentication(AdminLogsPage);
 
 export const BackOffice: React.FC = () => (
@@ -187,6 +194,8 @@ export const BackOffice: React.FC = () => (
           <Route exact path={ROUTES.codes.path} render={() => <QrPage />} />
 
           <Route exact path={ROUTES.codesRequest.path} render={() => <QrRequestsWithAuthentication />} />
+
+          <Route exact path={ROUTES.deliveries.requests.path} render={() => <DeliveriesRequestsWithAuthentication />} />
 
           <Route path={ROUTES.events.path} render={() => <EventsPage />} />
 
@@ -216,7 +225,7 @@ export const BackOffice: React.FC = () => (
 
           <Route path={ROUTES.checkouts.admin.path} render={() => <CheckoutsWithAuthentication />} />
 
-          <Route path={ROUTES.deliveries.admin.path} render={() => <DeliveriesWithAuthentication />} />
+          <Route path={ROUTES.deliveries.admin.path} render={() => <Deliveries />} />
 
           <Route exact path={ROUTES.adminLogs.path} render={() => <AdminLogsPageWithAuthentication />} />
 

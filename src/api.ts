@@ -748,7 +748,6 @@ export async function qrCodesListAssign(
   qrHashes: string[],
   eventId: number | null,
 ): Promise<QrCodesListAssignResponse> {
-  console.log(eventId);
   return secureFetch(`${API_BASE}/qr-code/list-assign`, {
     method: 'PUT',
     body: JSON.stringify({
@@ -1018,6 +1017,9 @@ export type Delivery = {
   metadata_title: string;
   metadata_description: string;
   event_ids: string;
+  approved?: boolean|null;
+  reviewed_by?: string;
+  reviewed_date?: Date;
 };
 
 export type DeliveryAddress = {
@@ -1037,18 +1039,37 @@ export function getDeliveries(
   limit: number,
   offset: number,
   eventId: number | undefined,
-  active: boolean | null,
+  approved?: boolean | null,
+  active?: boolean | null,
+  reviewed?: boolean | null,
 ): Promise<PaginatedDeliveries> {
   let paramsObject: any = { limit, offset };
 
   if (eventId) paramsObject['event_id'] = eventId;
 
+  if (authClient.isAuthenticated()) {
+    // Only admins are allowed to modify these params
+    if (approved !== null) {
+      paramsObject['approved'] = approved;
+    }
+    if (reviewed !== null) {
+      paramsObject['reviewed'] = reviewed;
+    }
+  } else {
+    paramsObject['approved'] = true;
+  }
   if (active !== null) {
     paramsObject['active'] = active;
   }
 
   const params = queryString.stringify(paramsObject);
-  return secureFetch(`${API_BASE}/deliveries?${params}`);
+  try {
+    return authClient.isAuthenticated()
+      ? secureFetch(`${API_BASE}/admin/deliveries?${params}`)
+      : fetchJson(`${API_BASE}/deliveries?${params}`);
+  } catch (e) {
+    return e;
+  }
 }
 
 export function getDelivery(id: string | number): Promise<Delivery> {
@@ -1070,9 +1091,11 @@ export function createDelivery(
   metadata_description: string,
   image: string,
   page_title_image: string,
+  secret_codes: string,
   addresses: any[],
 ): Promise<Delivery> {
-  return secureFetch(`${API_BASE}/deliveries`, {
+  const url = `${API_BASE}/deliveries`
+  const payload = {
     method: 'POST',
     body: JSON.stringify({
       slug,
@@ -1085,10 +1108,12 @@ export function createDelivery(
       metadata_description,
       image,
       page_title_image,
+      secret_codes,
       addresses,
     }),
     headers: { 'Content-Type': 'application/json' },
-  });
+  }
+  return authClient.isAuthenticated() ? secureFetch(url, payload) : fetchJson(url, payload);
 }
 
 export function updateDelivery(
@@ -1102,9 +1127,12 @@ export function updateDelivery(
   metadata_description: string,
   image: string,
   page_title_image: string,
+  event_ids: string,
+  secret_codes: string,
   active: boolean,
 ): Promise<Delivery> {
-  return secureFetch(`${API_BASE}/deliveries/${id}`, {
+  const url = `${API_BASE}/deliveries/${id}`
+  const payload = {
     method: 'PUT',
     body: JSON.stringify({
       slug,
@@ -1116,8 +1144,52 @@ export function updateDelivery(
       metadata_description,
       image,
       page_title_image,
+      event_ids,
+      secret_codes,
       active,
     }),
+    headers: { 'Content-Type': 'application/json' },
+  };
+  return authClient.isAuthenticated() ? secureFetch(url, payload) : fetchJson(url, payload);
+}
+
+export function addDeliveryAddresses(
+  id: number,
+  event_ids: string,
+  secret_codes: string,
+  addresses: any[],
+): Promise<Delivery> {
+  const url = `${API_BASE}/deliveries/${id}/address/add`
+  const payload = {
+    method: 'POST',
+    body: JSON.stringify({
+      event_ids,
+      secret_codes,
+      addresses
+    }),
+    headers: { 'Content-Type': 'application/json' },
+  }
+  return authClient.isAuthenticated() ? secureFetch(url, payload) : fetchJson(url, payload);
+}
+
+export function updateDeliveryStatus(
+  id: number,
+  approved: boolean,
+): Promise<void> {
+  return secureFetch(`${API_BASE}/admin/deliveries/review/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      approved
+    }),
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+export function rebuildDeliveries(
+): Promise<Delivery> {
+  return secureFetch(`${API_BASE}/admin/deliveries/build`, {
+    method: 'PUT',
+    body: JSON.stringify({}),
     headers: { 'Content-Type': 'application/json' },
   });
 }

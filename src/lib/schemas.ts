@@ -263,7 +263,8 @@ const DeliverySchema = yup.object().shape({
   metadata_description: yup.string().required('Metadata description is required'),
   image: yup.string().required('An image URL is required'),
   page_title_image: yup.string(),
-  event_ids: yup.string().required('Event IDs comma separated'),
+  edit_codes: yup.array().of(yup.string().required('A six digit code is required').matches(/^[0-9]{6}$/, 'Must be six digits, only numbers')).min(1).max(5),
+  event_ids: yup.array().of(yup.string().required('Event ID')).min(1).max(5),
 });
 
 const WebsiteSchema = yup.object().shape({

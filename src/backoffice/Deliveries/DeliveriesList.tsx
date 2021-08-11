@@ -53,13 +53,13 @@ const DeliveriesList = () => {
   const fetchDeliveries = async () => {
     setIsFetching(true);
     try {
-      const response = await getDeliveries(limit, page * limit, selectedEvent, activeStatus);
+      const response = await getDeliveries(limit, page * limit, selectedEvent, true, activeStatus);
       if (response) {
         setDeliveries(response.deliveries);
         setTotal(response.total);
       }
     } catch (e) {
-      addToast('Error while fetching deliveries', {
+      addToast('Error while fetching deliveries. '+e, {
         appearance: 'error',
         autoDismiss: false,
       });
@@ -105,8 +105,8 @@ const DeliveriesList = () => {
 
   const tableHeaders = (
     <div className={'row table-header visible-md'}>
-      <div className={'col-md-2'}>Name</div>
-      <div className={'col-md-6'}>Events</div>
+      <div className={'col-md-3'}>Name</div>
+      <div className={'col-md-5'}>Events</div>
       <div className={'col-md-2'}>URL</div>
       <div className={'col-md-1 center'}>Active</div>
       <div className={'col-md-1'} />
@@ -163,20 +163,20 @@ const DeliveriesList = () => {
           <div className={'admin-table-row delivery-table'}>
             {deliveries.map((delivery, i) => {
               return (
-                <div className={`row ${i % 2 === 0 ? 'even' : 'odd'}`} key={delivery.id}>
-                  <div className={'col-md-2 col-xs-12 ellipsis'}>
+                <div className={`row ${i % 2 === 0 ? 'even' : 'odd'}`} key={delivery.id} style={{position: 'relative'}}>
+                  <div className={'col-md-3 col-xs-12 ellipsis'}>
                     <span className={'visible-sm'}>Name: </span>
                     {delivery.card_title}
                   </div>
 
-                  <div className={'col-md-6 col-xs-12 ellipsis'}>
+                  <div className={'col-md-5 col-xs-12 ellipsis'}>
                     <span className={'visible-sm'}>Events: </span>
-                    {delivery.event_ids.split(',').map((id) => {
+                    {delivery.event_ids.split(',').map((id, i) => {
                       if (events) {
                         try {
                           let _id = parseInt(id, 10);
                           let event = events.find((e) => e.id === _id);
-                          if (event) return event.name.substr(0, 20) + '; ';
+                          if (event) return event.name.substr(0, 20) + `${i !== delivery.event_ids.split(',').length-1 ? '; ' : ''}`;
                         } catch (e) {
                           console.log(e);
                         }
@@ -192,15 +192,16 @@ const DeliveriesList = () => {
                     </a>
                   </div>
 
-                  <div className={'col-md-1 col-xs-6 center status'}>
+                  <div className={'col-md-1 col-xs-1 center status active-icon'}>
                     <span className={'visible-sm'}>Active: </span>
                     <img
                       src={delivery.active ? checked : error}
                       alt={delivery.active ? 'Active' : 'Inactive'}
+                      style={{marginLeft: 10}}
                       className={'status-icon'}
                     />
                   </div>
-                  <div className={'col-md-1 center event-edit-icon-container'}>
+                  <div className={'col-md-1 col-xs-1 center event-edit-icon-container'}>
                     <Link to={`/admin/deliveries/${delivery.id}`}>
                       <EditIcon />
                     </Link>
