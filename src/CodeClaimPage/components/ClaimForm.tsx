@@ -20,13 +20,14 @@ import { TxDetail } from 'components/TxDetail';
 /* Lib */
 import { isValidEmail } from 'lib/helpers';
 import { useImageSrc } from 'lib/hooks/useImageSrc';
-import { COLORS, STYLES, TX_STATUS } from 'lib/constants';
+import { COLORS, STYLES, TX_STATUS, LAYERS } from 'lib/constants';
 
 /* ABI */
 import abi from 'abis/PoapDelegatedMint.json';
 import { useWindowWidth } from '@react-hook/window-size';
 import dayjs from 'dayjs';
 import { parse } from 'date-fns';
+import NetCheckbox from './NetCheckbox';
 
 type QRFormValues = {
   address: string;
@@ -44,6 +45,7 @@ const ClaimForm: React.FC<{
   const [account, setAccount] = useState<string>(address || '');
   const [migrateInProcess, setMigrateInProcess] = useState<boolean>(false);
   const [migrate, setMigrate] = useState<boolean>(false);
+  const [mintingTo, setMintingTo] = useState<string>(LAYERS.layer2);
   const [token, setToken] = useState<number | null>(null);
   const [web3, setWeb3] = useState<any>(null);
   const [completeClaim, setCompleteClaim] = useState<HashClaim | null>(null);
@@ -217,7 +219,7 @@ const ClaimForm: React.FC<{
     });
   };
 
-  let CheckboxIcon = !migrate ? FiCheckSquare : FiSquare;
+  // let CheckboxIcon = !migrate ? FiCheckSquare : FiSquare;
 
   const migrationText = (
     <div className={'backoffice-tooltip'}>
@@ -302,7 +304,28 @@ const ClaimForm: React.FC<{
                       <br />
                     </>
                   ) : null}
-                  <CheckboxIcon color={mainColor ?? COLORS.primaryColor} /> Free minting in xDAI{' '}
+                  <NetCheckbox
+                    checked={mintingTo === LAYERS.layer2}
+                    tooltipContent={[migrationText]}
+                    onClick={() => setMintingTo(LAYERS.layer2)}
+                  >
+                    Free minting in xDAI
+                  </NetCheckbox>
+                  <NetCheckbox
+                    checked={mintingTo === LAYERS.layer3}
+                    tooltipContent={[migrationText]}
+                    onClick={() => setMintingTo(LAYERS.layer3)}
+                  >
+                    Free minting in Celo
+                  </NetCheckbox>
+                  <NetCheckbox
+                    checked={mintingTo === LAYERS.layer1}
+                    tooltipContent={[migrationText]}
+                    onClick={() => setMintingTo(LAYERS.layer1)}
+                  >
+                    Minting in mainnet
+                  </NetCheckbox>
+                  {/* <CheckboxIcon color={mainColor ?? COLORS.primaryColor} /> Free minting in xDAI{' '}
                   <Tooltip content={[migrationText]}>
                     <FiHelpCircle color={mainColor ?? COLORS.primaryColor} />
                   </Tooltip>
@@ -315,7 +338,7 @@ const ClaimForm: React.FC<{
                   <CheckboxIcon color={mainColor ?? COLORS.primaryColor} /> Minting in mainnet{' '}
                   <Tooltip content={[migrationText]}>
                     <FiHelpCircle color={mainColor ?? COLORS.primaryColor} />
-                  </Tooltip>
+                  </Tooltip> */}
                 </div>
                 {!txHash && (
                   <>
