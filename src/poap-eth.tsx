@@ -3,8 +3,13 @@ import Web3Modal from 'web3modal';
 import Portis from '@portis/web3';
 // @ts-ignore
 import WalletConnectProvider from '@walletconnect/web3-provider';
+import { newKit } from '@celo/contractkit';
+import CeloGlyph from 'images/celo-glyph.svg';
 
 export const NETWORK = process.env.REACT_APP_ETH_NETWORK || '';
+
+const celoKit = newKit(process.env.REACT_APP_ETH_NETWORK || 'https://alfajores-forno.celo-testnet.org');
+// const celoKit = newKit(process.env.REACT_APP_CELO_NET || "'https://alfajores-forno.celo-testnet.org'");
 
 export const providerOptions = {
   walletconnect: {
@@ -17,6 +22,24 @@ export const providerOptions = {
     package: Portis,
     options: {
       id: process.env.REACT_APP_PORTIS_APP_ID,
+    },
+  },
+  'custom-celo': {
+    display: {
+      logo: CeloGlyph,
+      name: 'Celo Wallet',
+      description: 'Connect to your Celo Wallet account',
+    },
+    package: celoKit.web3,
+    options: {
+      id: process.env.REACT_APP_PORTIS_APP_ID,
+    },
+    connector: async (ProviderPackage: any, options: any) => {
+      const provider = new ProviderPackage(options);
+
+      await provider.enable();
+
+      return provider;
     },
   },
 };
