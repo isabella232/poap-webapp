@@ -80,6 +80,7 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
         page_title_image: delivery.page_title_image,
         edit_codes: Array.from(Array(delivery.event_ids.split(',').length).keys()).map(_ => '')
       };
+      setEventsAmount(values.event_ids.length)
       return values;
     } else {
       const values: DeliveryFormType = {
@@ -102,6 +103,7 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
   /* Libraries */
   const { addToast } = useToasts();
   const history = useHistory()
+  const [reRenderOnNewDelivery, setReRenderOnNewDelivery] = useState<boolean>(false)
 
   /* Effects */
   useEffect(() => {
@@ -109,7 +111,7 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
       fetchDelivery().then();
     }
     fetchEvents().then();
-  }, []); /* eslint-disable-line react-hooks/exhaustive-deps */
+  }, [reRenderOnNewDelivery]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   /* Data functions */
   const fetchDelivery = async () => {
@@ -140,10 +142,11 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
   const cleanAddresses = (addresses: string, event_ids: string[]) => {
     const clean_addresses = [];
     try {
-      const _addresses = listInput.split(/\n/);
+      const _addresses = addresses.split(/\n/);
       let ctr = 0;
       for (let each of _addresses) {
         ctr++;
+        if (each === '') continue
         // Split by ;
         let parts = each.split(';');
         if (parts.length > 2) {
@@ -197,6 +200,17 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
       autoDismiss: false,
     });
   }
+  const refreshAddresses = async () => {
+    try {
+      const _addresses = await getDeliveryAddresses(id);
+      setAddresses(_addresses);
+    } catch (e) {
+      addToast('Error while refreshing addresses. '+e, {
+        appearance: 'error',
+        autoDismiss: false,
+      });
+    }
+  }
 
   // Edition Loading Component
   if (isEdition && !delivery) {
@@ -243,7 +257,7 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
               edit_codes
             } = submittedValues;
 
-            if (event_ids.length !== edit_codes.length) {
+            if (!authClient.isAuthenticated() && event_ids.length !== edit_codes.length) {
               setEventIdsError('Every event id must have a matching edit code')
               addToast(`Every event id must have a matching edit code`, {
                 appearance: 'error',
@@ -296,6 +310,7 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
                   actions.setSubmitting(false)
                   const id = delivery.id
                   history.push(generatePath(ROUTES.deliveries.editForm.path, { id }))
+                  setReRenderOnNewDelivery(!reRenderOnNewDelivery) // change state to force rerender
                 }).catch((e) => {
                   addToast('Error creating delivery. '+e.message, {
                     appearance: 'error',
@@ -324,6 +339,7 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
                       appearance: 'success',
                       autoDismiss: true,
                     });
+                    setListInput('')
                     actions.setSubmitting(false)
                   }).catch((e) => {
                     addToast('Error updating delivery. '+e.message, {
@@ -452,14 +468,16 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
                             setIsSubmittingAddresses(false)
                             return;
                           }
-                          if (values.edit_codes.find(code => code === "") !== undefined) {
-                            setAddressesError('Edit codes (above) must be filled as a way of authenticating')
-                            setIsSubmittingAddresses(false)
-                            return;
-                          } else if (values.edit_codes.find(code => code && (code.length !== 6 || !(/^\d+$/.test(code)))) !== undefined) {
-                            setAddressesError('All edit codes must be 6 digit numbers')
-                            setIsSubmittingAddresses(false)
-                            return;
+                          if (!authClient.isAuthenticated()) {
+                            if (values.edit_codes.find(code => code === "") !== undefined) {
+                              setAddressesError('Edit codes (above) must be filled as a way of authenticating')
+                              setIsSubmittingAddresses(false)
+                              return;
+                            } else if (values.edit_codes.find(code => code && (code.length !== 6 || !(/^\d+$/.test(code)))) !== undefined) {
+                              setAddressesError('All edit codes must be 6 digit numbers')
+                              setIsSubmittingAddresses(false)
+                              return;
+                            }
                           }
                           setAddressesError('');
 
@@ -486,6 +504,8 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
                               });
                               setAddingAddresses(false);
                               setIsSubmittingAddresses(false)
+                              setListInput('')
+                              refreshAddresses()
                             }).catch((err) => {
                               addToast('Error adding addresses. \n'+err.message, {
                                 appearance: 'error',
@@ -556,7 +576,7 @@ const IDandCodeField = ({isEdition = false, fieldId = -1}) => {
   return (
     <div>
       <div className={'col-xs-6'}>
-        <EventField title="Event IDs" disabled={isEdition} name={`event_ids[${fieldId}]`} />
+        <EventField title="Event ID" disabled={isEdition} name={`event_ids[${fieldId}]`} />
       </div>
       <div className={'col-xs-6'}>
         <EventField title="Edit Code" name={`edit_codes[${fieldId}]`} />

@@ -1055,8 +1055,6 @@ export function getDeliveries(
     if (reviewed !== null) {
       paramsObject['reviewed'] = reviewed;
     }
-  } else {
-    paramsObject['approved'] = true;
   }
   if (active !== null) {
     paramsObject['active'] = active;

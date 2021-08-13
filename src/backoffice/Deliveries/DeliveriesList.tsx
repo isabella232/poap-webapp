@@ -53,7 +53,7 @@ const DeliveriesList = () => {
   const fetchDeliveries = async () => {
     setIsFetching(true);
     try {
-      const response = await getDeliveries(limit, page * limit, selectedEvent, true, activeStatus);
+      const response = await getDeliveries(limit, page * limit, selectedEvent, null, activeStatus);
       if (response) {
         setDeliveries(response.deliveries);
         setTotal(response.total);

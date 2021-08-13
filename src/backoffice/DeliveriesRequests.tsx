@@ -164,7 +164,7 @@ const DeliveriesRequests: FC = () => {
         event_ids: delivery.event_ids.split(',').map((e) => parseInt(e, 10)),
         reviewed_date: delivery.approved && delivery.reviewed_date ? formatDate(new Date(delivery.reviewed_date).toDateString()) : '-',
         reviewed_by: delivery.approved ? delivery.reviewed_by : '-',
-        approved: delivery.approved ? delivery.approved : null,
+        approved: delivery.approved !== undefined ? delivery.approved : null,
       };
     });
   };
@@ -262,7 +262,7 @@ const CreationModal: React.FC<CreationModalProps> = ({ handleModalClose, deliver
       await updateDeliveryStatus(deliveryId, approved === 'approved')
         .then((_) => {
           setIsSubmitting(false);
-          addToast(`Delivery ${approved === null ? 'set as pending' : approved ? 'approved' : 'rejected'} correctly`, {
+          addToast(`Delivery ${approved === null ? 'set as pending' : approved === 'approved' ? 'approved' : 'rejected'} correctly`, {
             appearance: 'success',
             autoDismiss: true,
           });
@@ -351,11 +351,11 @@ type ApprovedIconProps = {
 };
 
 const ApprovedIcon: React.FC<ApprovedIconProps> = ({ approved }) => {
-  return <Tooltip styles={{content: {position: 'absolute', top: 20, marginLeft: -35}, tooltip: {}, arrow: {display: 'none'}, wrapper: {}, gap: {}}} content={approved === null || approved === undefined ? 'Pending' : approved ? 'Approved' : 'Rejected'}><img src={approved === null ? pending : approved ? checked : error} alt={approved === null ? 'Delivery Pending' : approved ? `Delivery Reviewed` : 'Delivery not Reviewed'} className={'icon'} style={{cursor: 'default'}} /></Tooltip>;
+  return <Tooltip styles={{content: {position: 'absolute', top: 20, marginLeft: -35}, tooltip: {}, arrow: {display: 'none'}, wrapper: {}, gap: {}}} content={approved === null || approved === undefined ? 'Pending' : approved ? 'Approved' : 'Rejected'}><img src={approved === null || approved === undefined ? pending : approved ? checked : error} alt={approved === null || approved === undefined ? 'Delivery Pending' : approved ? `Delivery Reviewed` : 'Delivery not Reviewed'} className={'icon'} style={{cursor: 'default'}} /></Tooltip>;
 };
 
 const ApprovedIconMobile: React.FC<ApprovedIconProps> = ({ approved }) => {
-  return <Tooltip styles={{content: {position: 'absolute', top: 20, right: 0}, tooltip: {}, arrow: {display: 'none'}, wrapper: {}, gap: {}}} content={approved === null || approved === undefined ? 'Pending' : approved ? 'Approved' : 'Rejected'}><img src={approved === null ? pending : approved ? checked : error} alt={approved === null ? 'Delivery Pending' : approved ? `Delivery Reviewed` : 'Delivery not Reviewed'} className={'icon'} style={{cursor: 'default'}} /></Tooltip>;
+  return <Tooltip styles={{content: {position: 'absolute', top: 20, right: 0}, tooltip: {}, arrow: {display: 'none'}, wrapper: {}, gap: {}}} content={approved === null || approved === undefined ? 'Pending' : approved ? 'Approved' : 'Rejected'}><img src={approved === null || approved === undefined ? pending : approved ? checked : error} alt={approved === null || approved === undefined ? 'Delivery Pending' : approved ? `Delivery Reviewed` : 'Delivery not Reviewed'} className={'icon'} style={{cursor: 'default'}} /></Tooltip>;
 };
 
 interface DeliveryTableData {
