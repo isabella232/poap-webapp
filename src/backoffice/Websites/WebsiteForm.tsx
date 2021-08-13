@@ -1,6 +1,8 @@
 import React, { FC, useState, useEffect, useMemo } from 'react';
 import { useToasts } from 'react-toast-notifications';
 import { Formik, Form, FormikActions } from 'formik';
+import QRCode from 'qrcode.react';
+import PoapQrLogo from '../../images/poap_qr.png';
 
 /* Helpers */
 import { WebsiteSchema } from '../../lib/schemas';
@@ -24,6 +26,7 @@ import FormFilterReactSelect from '../../components/FormFilterReactSelect';
 import { timezones } from '../Checkouts/_helpers/Timezones';
 import ReactModal from 'react-modal';
 import { Tooltip } from 'react-lightweight-tooltip';
+import { Button } from '../../components/Button';
 
 /* Types */
 type WebsiteFormType = {
@@ -50,6 +53,7 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
   const [activeWebsite, setActiveWebsite] = useState<boolean>(true);
   const [activeCaptcha, setActiveCaptcha] = useState<boolean>(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState<boolean>(false);
+  const [isQrGeneratorModalOpen, setIsQrGeneratorModalOpen] = useState<boolean>(false);
   const [isActiveQrRequest, setIsActiveQrRequest] = useState<boolean>(false);
   const [edit, setEdit] = useState<boolean>(false);
   const [isFetchingWebsite, setIsFetchingWebsite] = useState<boolean>(true);
@@ -250,6 +254,19 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
     }
   };
 
+  const downloadQR = () => {
+    const canvas = document.getElementById('qrCodeCanvasID') as HTMLCanvasElement;
+    if (!canvas) return;
+    const pngUrl = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream');
+    let downloadLink = document.createElement('a');
+    downloadLink.href = pngUrl;
+    const pngName = website ? website.claim_name : 'qrCode';
+    downloadLink.download = `${pngName}.png`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  };
+
   const handleQrRequestModalRequestClose = (): void => {
     setIsQrModalOpen(false);
   };
@@ -266,6 +283,11 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
     } else {
       setIsActiveQrRequest(false);
     }
+  };
+
+  const getWebsiteUrl = (): string => {
+    if (!website) return '';
+    return `${process.env.REACT_APP_WEBSITES_URL}/${website.claim_name}`;
   };
 
   return (
@@ -286,6 +308,32 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
           handleModalClose={handleQrRequestModalRequestClose}
           setIsActiveQrRequest={checkActiveQrRequest}
         />
+      </ReactModal>
+      <ReactModal
+        isOpen={isQrGeneratorModalOpen}
+        onRequestClose={() => setIsQrGeneratorModalOpen(false)}
+        shouldFocusAfterRender={true}
+        shouldCloseOnEsc={true}
+        shouldCloseOnOverlayClick={true}
+      >
+        <div className={'row'}>
+          <div className={'col-md-12'} style={{ textAlign: 'center' }}>
+            <QRCode
+              id="qrCodeCanvasID"
+              value={getWebsiteUrl()}
+              size={320}
+              includeMargin={true}
+              imageSettings={{
+                src: PoapQrLogo,
+                width: 80,
+                height: 80,
+              }}
+            />
+          </div>
+          <div className={'col-md-12'} style={{ textAlign: 'center' }}>
+            <Button action={downloadQR} text="Download QR" extraClass="" />
+          </div>
+        </div>
       </ReactModal>
       {/*End Modals*/}
       <div className={'bk-container'}>
@@ -376,11 +424,25 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
                   )}
 
                   {edit && (
-                    <RequestMoreCodesButton
-                      hasActiveQrRequest={isActiveQrRequest}
-                      isExpiredEvent={isExpiredEvent}
-                      onClick={handleQrRequestModalClick}
-                    />
+                    <div>
+                      <div className={'col-md-8 col-sm-12'}>
+                        <RequestMoreCodesButton
+                          hasActiveQrRequest={isActiveQrRequest}
+                          isExpiredEvent={isExpiredEvent}
+                          onClick={handleQrRequestModalClick}
+                        />
+                      </div>
+                      <div className={'col-md-4 col-sm-12'}>
+                        <button
+                          type="button"
+                          className={'filter-base filter-button'}
+                          onClick={() => setIsQrGeneratorModalOpen(true)}
+                          style={{ width: '100%' }}
+                        >
+                          Generate QR
+                        </button>
+                      </div>
+                    </div>
                   )}
                   <div>
                     <div className={'col-xs-8'}>
@@ -434,7 +496,16 @@ const RequestMoreCodesButton: FC<RequestMoreCodesButtonProps> = ({ hasActiveQrRe
   };
 
   return disabled() ? (
-    <Tooltip content={[tooltipMessage]}>
+    <Tooltip
+      content={[tooltipMessage]}
+      styles={{
+        wrapper: { display: 'block' },
+        tooltip: {},
+        arrow: {},
+        gap: {},
+        content: {},
+      }}
+    >
       <button
         disabled={true}
         type="button"
@@ -448,7 +519,7 @@ const RequestMoreCodesButton: FC<RequestMoreCodesButtonProps> = ({ hasActiveQrRe
       </button>
     </Tooltip>
   ) : (
-    <button type="button" className={'filter-base filter-button'} onClick={onClick}>
+    <button type="button" className={'filter-base filter-button'} onClick={onClick} style={{ width: '100%' }}>
       Request more codes
     </button>
   );
