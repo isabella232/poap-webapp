@@ -297,7 +297,7 @@
           right: 10px;
 
           @media (max-width: $bp-mw) {
-            position: absolute;
+            position: static;
             top: -55px;
           }
         }

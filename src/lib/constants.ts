@@ -173,6 +173,11 @@ const ROUTES = {
       roles: [ROLES.administrator],
       title: 'Edit Delivery',
     },
+    requests: {
+      path: '/admin/deliveries/requests',
+      roles: [ROLES.administrator],
+      title: 'Manage Deliveries Requests',
+    },
   },
 
   websites: {

@@ -189,6 +189,13 @@ ol {
     text-decoration: none;
     background: #6534ff;
   }
+  &.red {
+    background: #de4437;
+    &:hover,
+    &:focus {
+      background: red;
+    }
+  }
   &:disabled {
     text-decoration: none;
     background: #ccc4f7;
@@ -206,6 +213,11 @@ ol {
   }
   .small-text {
     @include x-rem(font-size, 16px);
+  }
+  &.small {
+    @include x-rem(font-size, 16px);
+    min-width: 150px;
+    min-height: 40px;
   }
 }
 

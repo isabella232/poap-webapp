@@ -514,3 +514,11 @@
     min-width: auto;
   }
 }
+
+.active-icon {
+  @media (max-width: $bp-mw) {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+}
