@@ -263,11 +263,20 @@ const DeliverySchema = yup.object().shape({
   metadata_description: yup.string().required('Metadata description is required'),
   image: yup.string().required('An image URL is required'),
   page_title_image: yup.string(),
-  edit_codes: yup.array().of(yup.string().required('A six digit code is required').matches(/^[0-9]{6}$/, 'Must be six digits, only numbers')).min(1).max(5),
+  edit_codes: yup
+    .array()
+    .of(
+      yup
+        .string()
+        .required('A six digit code is required')
+        .matches(/^[0-9]{6}$/, 'Must be six digits, only numbers'),
+    )
+    .min(1)
+    .max(5),
   event_ids: yup.array().of(yup.string().required('Event ID')).min(1).max(5),
 });
 
-const WebsiteSchema = yup.object().shape({
+const WebsiteBaseShape = {
   claimName: yup
     .string()
     .required('A unique name is required')
@@ -279,10 +288,24 @@ const WebsiteSchema = yup.object().shape({
   end_time: yup.string().required('an end time is required'),
   captcha: yup.boolean(),
   active: yup.boolean(),
+};
+
+const WebsiteSchemaWithActiveRequest = yup.object().shape({
+  ...WebsiteBaseShape,
+  codesQuantity: yup
+    .number()
+    .required('the amount of requested codes must be greater or equals to zero')
+    .moreThan(-1, 'the amount of requested codes must be greater or equals to zero')
+    .integer('the amount of requested codes must be an integer'),
+});
+
+const WebsiteSchemaWithoutActiveRequest = yup.object().shape({
+  ...WebsiteBaseShape,
   codesQuantity: yup
     .number()
     .required('A positive amount of codes is required')
-    .positive('the amount of requested codes must be greater than zero'),
+    .positive('the amount of requested codes must be greater than zero')
+    .integer('the amount of requested codes must be an integer'),
 });
 
 export {
@@ -302,6 +325,7 @@ export {
   UpdateModalWithFormikListSchema,
   CheckoutSchema,
   DeliverySchema,
-  WebsiteSchema,
+  WebsiteSchemaWithActiveRequest,
+  WebsiteSchemaWithoutActiveRequest,
   PoapQrRequestSchema,
 };

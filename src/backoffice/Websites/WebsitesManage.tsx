@@ -6,6 +6,8 @@ import WebsiteForm from './WebsiteForm';
 import WebsitesList from './WebsitesList';
 import { EventSecretCodeForm } from './EventSecretCodeForm';
 import { parse } from 'date-fns';
+import { useHistory } from 'react-router-dom';
+import { ROUTES } from '../../lib/constants';
 
 const WebsitesManage: FC = () => {
   const [isAuthenticationModalOpen, setIsAuthenticationModalOpen] = useState<boolean>(true);
@@ -15,6 +17,7 @@ const WebsitesManage: FC = () => {
   const [event, setEvent] = useState<PoapEvent | undefined>(undefined);
   const [secretCode, setSecretCode] = useState<number | undefined>(undefined);
   const [events, setEvents] = useState<PoapEvent[]>([]);
+  const history = useHistory();
 
   const isAdmin = authClient.isAuthenticated();
 
@@ -94,6 +97,9 @@ const WebsitesManage: FC = () => {
           loading={isLoadingAuth}
           events={events}
           askSecretCode={true}
+          onClose={() => {
+            history.push(ROUTES.admin);
+          }}
         />
       </ReactModal>
       {/*End Modals*/}

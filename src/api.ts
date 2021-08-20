@@ -1017,7 +1017,7 @@ export type Delivery = {
   metadata_title: string;
   metadata_description: string;
   event_ids: string;
-  approved?: boolean|null;
+  approved?: boolean | null;
   reviewed_by?: string;
   reviewed_date?: Date;
 };
@@ -1092,7 +1092,7 @@ export function createDelivery(
   secret_codes: string,
   addresses: any[],
 ): Promise<Delivery> {
-  const url = `${API_BASE}/deliveries`
+  const url = `${API_BASE}/deliveries`;
   const payload = {
     method: 'POST',
     body: JSON.stringify({
@@ -1110,7 +1110,7 @@ export function createDelivery(
       addresses,
     }),
     headers: { 'Content-Type': 'application/json' },
-  }
+  };
   return authClient.isAuthenticated() ? secureFetch(url, payload) : fetchJson(url, payload);
 }
 
@@ -1129,7 +1129,7 @@ export function updateDelivery(
   secret_codes: string,
   active: boolean,
 ): Promise<Delivery> {
-  const url = `${API_BASE}/deliveries/${id}`
+  const url = `${API_BASE}/deliveries/${id}`;
   const payload = {
     method: 'PUT',
     body: JSON.stringify({
@@ -1157,34 +1157,30 @@ export function addDeliveryAddresses(
   secret_codes: string,
   addresses: any[],
 ): Promise<Delivery> {
-  const url = `${API_BASE}/deliveries/${id}/address/add`
+  const url = `${API_BASE}/deliveries/${id}/address/add`;
   const payload = {
     method: 'POST',
     body: JSON.stringify({
       event_ids,
       secret_codes,
-      addresses
+      addresses,
     }),
     headers: { 'Content-Type': 'application/json' },
-  }
+  };
   return authClient.isAuthenticated() ? secureFetch(url, payload) : fetchJson(url, payload);
 }
 
-export function updateDeliveryStatus(
-  id: number,
-  approved: boolean,
-): Promise<void> {
+export function updateDeliveryStatus(id: number, approved: boolean): Promise<void> {
   return secureFetch(`${API_BASE}/admin/deliveries/review/${id}`, {
     method: 'PUT',
     body: JSON.stringify({
-      approved
+      approved,
     }),
     headers: { 'Content-Type': 'application/json' },
   });
 }
 
-export function rebuildDeliveries(
-): Promise<Delivery> {
+export function rebuildDeliveries(): Promise<Delivery> {
   return secureFetch(`${API_BASE}/admin/deliveries/build`, {
     method: 'PUT',
     body: JSON.stringify({}),
@@ -1200,6 +1196,7 @@ export type Website = {
   created: string;
   from: string;
   to: string;
+  timezone: number;
   event_id?: number;
   deliveriesCount?: { total: number; claimed: number };
 };
@@ -1268,6 +1265,7 @@ export async function createWebsite(
   event_id: number,
   claim_name: string,
   requested_codes: number,
+  timezone: number,
   from?: string,
   to?: string,
   captcha?: boolean,
@@ -1279,6 +1277,7 @@ export async function createWebsite(
     secret_code,
     claim_name,
     requested_codes,
+    timezone,
     from,
     to,
     captcha,
@@ -1301,6 +1300,7 @@ export async function updateWebsite(
   claim_name: string,
   from: string,
   to: string,
+  timezone: number,
   captcha?: boolean,
   active?: boolean,
   secret_code?: number,
@@ -1308,11 +1308,13 @@ export async function updateWebsite(
   const body = JSON.stringify({
     event_id,
     claim_name,
+    timezone,
     from,
     to,
     captcha,
     active,
     secret_code,
+    qr_requests_requested_codes_check: false,
   });
 
   const payload: RequestInit = {

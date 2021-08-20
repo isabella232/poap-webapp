@@ -1169,6 +1169,12 @@
     }
   }
 
+  .warning-text {
+    text-align: center;
+    color: $color-primary;
+    max-width: 90%;
+  }
+
   .date-row {
     .col-md-4, .col-xs-4 {
       display: flex;
@@ -1289,10 +1295,16 @@ table.backoffice-table {
         border: none;
         background: none;
         margin: 0 0 0 0;
-        max-width: 230px;
+        max-width: 200px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+
+        div {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
 
         &.wrap {
           white-space: normal;
@@ -1325,6 +1337,26 @@ table.backoffice-table {
     tr:nth-child(odd) {
       background: none
     }
+  }
+}
+
+.auth-modal-container {
+  .close {
+    position: absolute;
+    width: 20px;
+    z-index: 1;
+    right: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+
+    .close-icon {
+      width: 20px;
+    }
+  }
+
+  .filter-by {
+    margin-top: 25px;
   }
 }
 
