@@ -1,7 +1,7 @@
 import React, { useCallback, useState, ReactElement, useEffect, useMemo, ChangeEvent, ReactNode } from 'react';
 import { Link, Route, RouteComponentProps, Switch } from 'react-router-dom';
 import classNames from 'classnames';
-import { Formik, Form, Field, ErrorMessage, FieldProps, FormikActions, FormikHandlers } from 'formik';
+import { Formik, Form, Field, ErrorMessage, FieldProps, FormikActions, FormikHandlers, FormikProps } from 'formik';
 import DayPickerInput from 'react-day-picker/DayPickerInput';
 import 'react-day-picker/lib/style.css';
 import { format } from 'date-fns';
@@ -816,6 +816,7 @@ export const ImageContainer = ({
 );
 
 export const EventField: React.FC<EventFieldProps> = ({ title, name, disabled = false, type, placeholder }) => {
+  const hasErrors = (form: FormikProps<any>) => !!form.errors[name] || !!form.errors[name.split('[')[0]] // second option contemplates array-type inputs
   return (
     <Field
       name={name}
@@ -827,7 +828,7 @@ export const EventField: React.FC<EventFieldProps> = ({ title, name, disabled = 
               {...field}
               wrap="soft"
               disabled={disabled}
-              className={classNames(!!form.errors[name] && 'error')}
+              className={classNames(hasErrors(form) && 'error')}
             />
           )}
           {type !== 'textarea' && (
@@ -836,7 +837,7 @@ export const EventField: React.FC<EventFieldProps> = ({ title, name, disabled = 
               placeholder={placeholder ? placeholder : ''}
               type={type || 'text'}
               disabled={disabled}
-              className={classNames(!!form.errors[name] && 'error')}
+              className={classNames(hasErrors(form) && 'error')}
             />
           )}
           <ErrorMessage name={name} component="p" className="bk-error" />

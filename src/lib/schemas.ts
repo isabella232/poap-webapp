@@ -255,25 +255,16 @@ const DeliverySchema = yup.object().shape({
     .required('A unique name is required')
     .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Must be URL friendly. No spaces, only ASCII')
     .max(100, 'The event name should be less than 100 characters'),
-  card_title: yup.string().required('Card title is required'),
+  card_title: yup.string().required('Card title is required').max(200, 'Card title must be less than 200 characters'),
   card_text: yup.string().required('Card text is required'),
-  page_title: yup.string().required('Page title is required'),
+  page_title: yup.string().required('Page title is required').max(200, 'Page title must be less than 200 characters'),
   page_text: yup.string().required('Page text is required'),
-  metadata_title: yup.string().required('Metadata title text is required'),
-  metadata_description: yup.string().required('Metadata description is required'),
+  metadata_title: yup.string().required('Metadata title text is required').max(200, 'Metadata title must be less than 200 characters'),
+  metadata_description: yup.string().required('Metadata description is required').max(200, 'Metadata description must be less than 200 characters'),
   image: yup.string().required('An image URL is required'),
   page_title_image: yup.string(),
-  edit_codes: yup
-    .array()
-    .of(
-      yup
-        .string()
-        .required('A six digit code is required')
-        .matches(/^[0-9]{6}$/, 'Must be six digits, only numbers'),
-    )
-    .min(1)
-    .max(5),
-  event_ids: yup.array().of(yup.string().required('Event ID')).min(1).max(5),
+  edit_codes: yup.array().of(yup.string().required('An edit code is required').matches(/^[0-9]{6}$/, 'Edit code must be six digits, only numbers')).min(1).max(5),
+  event_ids: yup.array().of(yup.string().required('An event ID is required')).min(1).max(5),
 });
 
 const WebsiteBaseShape = {

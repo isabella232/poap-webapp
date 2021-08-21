@@ -339,7 +339,7 @@ type EditButtonProps = {
 };
 
 const EditButton: React.FC<EditButtonProps> = ({ id, approved, onClick, style }) => {
-  return !approved ? (
+  return approved === null ? (
     <img src={edit} alt={'Edit'} className={'icon'} onClick={() => onClick(id)} style={style} />
   ) : (
     <img src={editDisable} alt={'Edit'} className={'icon'} style={style} />

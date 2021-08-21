@@ -111,10 +111,10 @@ export const NavigationMenu = withRouter(({ history }) => {
       <SidebarLink route={ROUTES.codes} handleClick={closeMenu} />
 
       <SidebarLink route={ROUTES.deliveries.admin} handleClick={closeMenu} />
-      {isAdmin && <SidebarLink route={ROUTES.deliveries.requests} handleClick={closeMenu} />}
-
 
       {isAdmin && <SidebarLink route={ROUTES.codesRequest} handleClick={closeMenu} />}
+
+      {isAdmin && <SidebarLink route={ROUTES.deliveries.requests} handleClick={closeMenu} />}
 
       <SidebarLink route={ROUTES.template} handleClick={closeMenu} />
 
