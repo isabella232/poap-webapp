@@ -176,6 +176,9 @@ const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
           events={events}
           error={eventIdModalError}
           loading={isFetchingEvent}
+          onClose={() => {
+            setIsEventIdModalOpen(false);
+          }}
         />
       </ReactModal>
       {/*End Modals*/}

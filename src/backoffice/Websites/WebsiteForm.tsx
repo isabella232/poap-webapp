@@ -5,7 +5,7 @@ import QRCode from 'qrcode.react';
 import PoapQrLogo from '../../images/poap_qr.png';
 
 /* Helpers */
-import { WebsiteSchema } from '../../lib/schemas';
+import { WebsiteSchemaWithActiveRequest, WebsiteSchemaWithoutActiveRequest } from '../../lib/schemas';
 import {
   Website,
   getWebsiteByEventIdAndSecretCode,
@@ -98,12 +98,13 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
     };
 
     if (website) {
-      const from = new Date(website.from);
-      const to = new Date(website.to);
+      const tzDelta = (website.timezone * 60 + new Date().getTimezoneOffset()) * 60000;
+      const from = new Date(new Date(website.from).getTime() + tzDelta);
+      const to = new Date(new Date(website.to).getTime() + tzDelta);
 
       values = {
         claimName: website.claim_name,
-        timezone: 0,
+        timezone: website.timezone,
         start_date: formatDate(from),
         start_time: formatTime(from),
         end_date: formatDate(to),
@@ -204,6 +205,7 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
             eventId,
             claimName,
             codesQuantity,
+            timezone,
             startDateTime.toISOString(),
             endDateTime.toISOString(),
             activeCaptcha,
@@ -225,6 +227,7 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
             claimName,
             startDateTime.toISOString(),
             endDateTime.toISOString(),
+            timezone,
             activeCaptcha,
             activeWebsite,
             secretCode,
@@ -275,7 +278,6 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
     setIsQrModalOpen(true);
   };
 
-  //todo check if this is working for websites
   const checkActiveQrRequest = async (id: number) => {
     const { active } = await getActiveQrRequests(id);
     if (active > 0) {
@@ -343,7 +345,7 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
             enableReinitialize
             validateOnBlur={false}
             validateOnChange={false}
-            validationSchema={WebsiteSchema}
+            validationSchema={isActiveQrRequest ? WebsiteSchemaWithActiveRequest : WebsiteSchemaWithoutActiveRequest}
             onSubmit={onSubmit}
           >
             {({ values, errors, isSubmitting, setFieldValue }) => {
@@ -419,6 +421,12 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
                     <div className={'date-row'}>
                       <div className={'col-xs-12'}>
                         <EventField title={'Requested Codes'} name={'codesQuantity'} type={'number'} disabled={edit} />
+                        {isActiveQrRequest && (
+                          <p className={'warning-text'}>
+                            You already have <b>pending requested codes</b>, if you enter a number different from zero
+                            your previous request would be updated to this value.
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}

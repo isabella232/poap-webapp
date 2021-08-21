@@ -161,7 +161,7 @@ const ROUTES = {
     admin: {
       path: '/admin/deliveries',
       roles: [ROLES.administrator],
-      title: 'Deliveries',
+      title: 'Manage Deliveries',
     },
     newForm: {
       path: '/admin/deliveries/new',

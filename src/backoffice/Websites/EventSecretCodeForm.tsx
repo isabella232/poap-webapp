@@ -4,6 +4,7 @@ import { Field, Form, Formik } from 'formik';
 import { Loading } from '../../components/Loading';
 import FilterReactSelect from '../../components/FilterReactSelect';
 import { OptionTypeBase } from 'react-select';
+import CloseIcon from '../../images/x.svg';
 
 type EventSecretCodeForm = {
   onSubmit: (eventId: number, secretCode?: number) => void;
@@ -11,6 +12,7 @@ type EventSecretCodeForm = {
   loading: boolean;
   error?: string;
   askSecretCode?: boolean;
+  onClose?: () => void;
 };
 
 export const EventSecretCodeForm: React.FC<EventSecretCodeForm> = ({
@@ -19,6 +21,7 @@ export const EventSecretCodeForm: React.FC<EventSecretCodeForm> = ({
   loading,
   onSubmit,
   askSecretCode,
+  onClose,
 }) => {
   const [mode, setMode] = useState<string>('name');
 
@@ -48,11 +51,15 @@ export const EventSecretCodeForm: React.FC<EventSecretCodeForm> = ({
     >
       {({ values }) => {
         return (
-          <Form className={'authentication-modal-container'}>
+          <Form className={'auth-modal-container'}>
             {loading && <Loading />}
             {!loading && (
               <>
+                <button type="button" className="close" onClick={onClose}>
+                  <img src={CloseIcon} alt={'close'} className="close-icon" />
+                </button>
                 <select
+                  className={'filter-by'}
                   value={mode}
                   onChange={(e) => {
                     setMode(e.target.value);

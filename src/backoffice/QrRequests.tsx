@@ -418,6 +418,7 @@ const QrRequestTable: React.FC<QrRequestTableProps> = ({ data, onEdit, onSortCha
         Header: () => <div className={'left'}>Organizer</div>,
         accessor: 'organizer',
         disableSortBy: true,
+        Cell: ({ value }) => <div>{value}</div>,
       },
       {
         id: 'created_date',

@@ -11,7 +11,6 @@ import { ROUTES } from '../../lib/constants';
 import { Loading } from '../../components/Loading';
 import FilterButton from '../../components/FilterButton';
 import FilterReactSelect from '../../components/FilterReactSelect';
-import FilterSelect from '../../components/FilterSelect';
 import ReactPaginate from 'react-paginate';
 
 /* Assets */
@@ -29,7 +28,6 @@ const DeliveriesList = () => {
   const [page, setPage] = useState<number>(0);
   const [total, setTotal] = useState<number>(0);
   const [limit, setLimit] = useState<number>(10);
-  const [activeStatus, setActiveStatus] = useState<boolean | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<number | undefined>(undefined);
   const [events, setEvents] = useState<PoapEvent[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
@@ -47,13 +45,13 @@ const DeliveriesList = () => {
   useEffect(() => {
     setPage(0);
     fetchDeliveries();
-  }, [selectedEvent, activeStatus, limit]); /* eslint-disable-line react-hooks/exhaustive-deps */
+  }, [selectedEvent, limit]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   /* Data functions */
   const fetchDeliveries = async () => {
     setIsFetching(true);
     try {
-      const response = await getDeliveries(limit, page * limit, selectedEvent, null, activeStatus);
+      const response = await getDeliveries(limit, page * limit, selectedEvent, null, null);
       if (response) {
         setDeliveries(response.deliveries);
         setTotal(response.total);
@@ -87,11 +85,6 @@ const DeliveriesList = () => {
   const handleSelectChange = (option: OptionTypeBase): void => {
     setSelectedEvent(option.value);
   };
-  const handleStatusChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
-    const { value } = e.target;
-    let finalValue = value === '' ? null : value === 'true';
-    setActiveStatus(finalValue);
-  };
   const handlePageChange = (obj: PaginateAction) => setPage(obj.selected);
 
   /* UI Manipulation */
@@ -106,7 +99,7 @@ const DeliveriesList = () => {
   const tableHeaders = (
     <div className={'row table-header visible-md'}>
       <div className={'col-md-3'}>Name</div>
-      <div className={'col-md-5'}>Events</div>
+      <div className={'col-md-5'}>Event/s</div>
       <div className={'col-md-2'}>URL</div>
       <div className={'col-md-1 center'}>Active</div>
       <div className={'col-md-1'} />
@@ -122,16 +115,7 @@ const DeliveriesList = () => {
             <FilterReactSelect options={eventOptions} onChange={handleSelectChange} placeholder={'Filter by Event'} />
           </div>
         </div>
-        <div className={'filter col-md-3 col-xs-6'}>
-          <div className={'filter-group'}>
-            <FilterSelect handleChange={handleStatusChange}>
-              <option value="">Filter by status</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </FilterSelect>
-          </div>
-        </div>
-        <div className={'col-md-2'} />
+        <div className={'col-md-5'} />
         <div className={'filter col-md-3 col-xs-6 new-button'}>
           <Link to={ROUTES.deliveries.newForm.path}>
             <FilterButton text="Create new" />
@@ -170,13 +154,13 @@ const DeliveriesList = () => {
                   </div>
 
                   <div className={'col-md-5 col-xs-12 ellipsis'}>
-                    <span className={'visible-sm'}>Events: </span>
+                    <span className={'visible-sm'}>Event/s: </span>
                     {delivery.event_ids.split(',').map((id, i) => {
                       if (events) {
                         try {
                           let _id = parseInt(id, 10);
                           let event = events.find((e) => e.id === _id);
-                          if (event) return event.name.substr(0, 20) + `${i !== delivery.event_ids.split(',').length-1 ? '; ' : ''}`;
+                          if (event) return event.name.substr(0, 20) + ` (${_id})${i !== delivery.event_ids.split(',').length-1 ? '; ' : ''}`;
                         } catch (e) {
                           console.log(e);
                         }
