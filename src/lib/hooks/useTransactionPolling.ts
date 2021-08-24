@@ -19,7 +19,7 @@ const useTransactionPolling = (hash: string, layer: string) => {
     if (layer) {
       const provider =
         layer === LAYERS.layer1 ? process.env.REACT_APP_INFURA_PROVIDER || '' :
-        layer === LAYERS.celo ? process.env.REACT_APP_L2_RPC_URL || '' : process.env.REACT_APP_L2_RPC_URL || '';
+        layer === LAYERS.celo ? process.env.REACT_APP_CELO_RPC_URL || '' : process.env.REACT_APP_L2_RPC_URL || '';
       const _web3 = new Web3(provider);
       setWeb3(_web3);
     }

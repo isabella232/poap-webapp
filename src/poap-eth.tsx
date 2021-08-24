@@ -8,8 +8,7 @@ import CeloGlyph from 'images/celo-glyph.svg';
 
 export const NETWORK = process.env.REACT_APP_ETH_NETWORK || '';
 
-const celoKit = newKit(process.env.REACT_APP_ETH_NETWORK || 'https://alfajores-forno.celo-testnet.org');
-// const celoKit = newKit(process.env.REACT_APP_CELO_NET || "'https://alfajores-forno.celo-testnet.org'");
+const celoKit = newKit(process.env.REACT_APP_CELO_RPC_URL || 'https://alfajores-forno.celo-testnet.org');
 
 export const providerOptions = {
   walletconnect: {

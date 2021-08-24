@@ -312,9 +312,9 @@ const ClaimForm: React.FC<{
                     Free minting in xDAI
                   </NetCheckbox>
                   <NetCheckbox
-                    checked={mintingTo === LAYERS.layer3}
+                    checked={mintingTo === LAYERS.celo}
                     tooltipContent={[migrationText]}
-                    onClick={() => setMintingTo(LAYERS.layer3)}
+                    onClick={() => setMintingTo(LAYERS.celo)}
                   >
                     Free minting in Celo
                   </NetCheckbox>

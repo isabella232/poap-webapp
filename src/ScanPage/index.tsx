@@ -79,9 +79,6 @@ export const ScanFooter: React.FC<ScanFooterProps> = ({ path }) => (
     <div className="footer-content">
       <div className="container">
         <img src={FooterPattern} alt="" className="decoration big-picture" />
-        {/* <div className="eth-branding">
-          <img src={BuiltOnEth} alt="Built on Ethereum" />
-        </div> */}
         <div className="brandings">
           <span className="eth-branding branding">
             <img src={BuiltOnEth} alt="Built on Ethereum" />

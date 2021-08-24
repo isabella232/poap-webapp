@@ -199,7 +199,7 @@ export const TokenDetailPage: React.FC<RouteComponentProps<{
     const messageCases = {
       layer1: 'This POAP is currently on mainnet and it can be migrated to xDAI',
       layer2: 'This POAP is currently on xDAI and it can be migrated to mainnet and Celo',
-      layer3: 'This POAP is currently on Celo and it can be migrated to xDAI',
+      celo: 'This POAP is currently on Celo and it can be migrated to xDAI',
     };
     message = (messageCases as any)[layer.toLowerCase()];
     return message;
@@ -261,7 +261,7 @@ export const TokenDetailPage: React.FC<RouteComponentProps<{
               </ul>
             </div>
             <div className={'migration-section'}>
-              {(layer === LAYERS.layer1 || layer === LAYERS.layer2 || layer === LAYERS.layer3) &&
+              {(layer === LAYERS.layer1 || layer === LAYERS.layer2 || layer === LAYERS.celo) &&
                 !migrationFinished &&
                 !txHash && (
                   <>
@@ -274,7 +274,7 @@ export const TokenDetailPage: React.FC<RouteComponentProps<{
                     </div>
                   </>
                 )}
-              {(layer === LAYERS.layer1 || layer === LAYERS.layer2 || layer === LAYERS.layer3) && migrationFinished && (
+              {(layer === LAYERS.layer1 || layer === LAYERS.layer2 || layer === LAYERS.celo) && migrationFinished && (
                 <p className={'success'}>POAP migrated successfully!</p>
               )}
               {txHash && <TxDetail hash={txHash} receipt={txReceipt} />}
