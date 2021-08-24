@@ -10,6 +10,7 @@ import FooterShadowDesktop from '../images/footer-shadow-desktop.svg';
 import FooterPattern from '../images/footer-pattern.svg';
 import PoapLogo from '../images/POAP.svg';
 import BuiltOnEth from '../images/built-on-eth.png';
+import SupportedOnCelo from '../images/supported-on-celo-bg.png';
 import { useBodyClassName } from '../react-helpers';
 import { ROUTES } from '../lib/constants';
 
@@ -67,8 +68,8 @@ export const ScanHeader: React.FC<ScanHeaderProps> = ({ sectionName }) => (
 export const ScanFooter: React.FC<ScanFooterProps> = ({ path }) => (
   <footer
     role="contentinfo"
-    className={`footer-events 
-    ${path === 'home' ? 'normal-background' : ''} 
+    className={`footer-events
+    ${path === 'home' ? 'normal-background' : ''}
     ${path === 'token' ? 'secondary-background' : ''}`}
   >
     <div className="image-footer">
@@ -78,8 +79,13 @@ export const ScanFooter: React.FC<ScanFooterProps> = ({ path }) => (
     <div className="footer-content">
       <div className="container">
         <img src={FooterPattern} alt="" className="decoration big-picture" />
-        <div className="eth-branding">
-          <img src={BuiltOnEth} alt="Built on Ethereum" />
+        <div className="brandings">
+          <span className="eth-branding">
+            <img src={BuiltOnEth} alt="Built on Ethereum" />
+          </span>
+          <span className="celo-branding">
+            <img src={SupportedOnCelo} alt="Support on Celo" />
+          </span>
         </div>
       </div>
     </div>

@@ -153,13 +153,16 @@
       }
     }
 
-    .eth-branding {
+    .brandings {
       text-align: center;
-      padding: 20px 0;
-      img {
-        width: 150px;
+      span {
+          text-align: center;
+          padding: 5px;
+          img {
+              width: 150px;
+          }
       }
-    }
+  }
 
     .social-icons {
       text-align: center;

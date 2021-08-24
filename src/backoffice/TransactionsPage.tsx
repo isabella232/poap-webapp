@@ -8,7 +8,7 @@ import { ErrorMessage, Field, FieldProps, Form, Formik, FormikActions } from 'fo
 
 /* Helpers */
 import { GasPriceSchema } from '../lib/schemas';
-import { TX_STATUS, LAYERS, etherscanLinks, blockscoutLinks } from '../lib/constants';
+import { TX_STATUS, LAYERS, etherscanLinks, blockscoutLinks, celoLinks } from '../lib/constants';
 import { Transaction, getTransactions, bumpTransaction, AdminAddress, getSigners } from '../api';
 import { convertFromGWEI, convertToGWEI, reduceAddress } from '../lib/helpers';
 /* Components */
@@ -196,7 +196,8 @@ const TransactionsPage: FC = () => {
 
         {transactions &&
           transactions.map((tx, i) => {
-            const blockExplorer = tx.layer === LAYERS.layer1 ? etherscanLinks : blockscoutLinks;
+            const blockExplorer = tx.layer === LAYERS.layer1 ? etherscanLinks :
+            tx.layer === LAYERS.layer2 ? blockscoutLinks : celoLinks;
             return (
               <div className={`row ${i % 2 === 0 ? 'even' : 'odd'}`} key={tx.id}>
                 <div className={'col-md-1 center'}>

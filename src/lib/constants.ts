@@ -201,10 +201,17 @@ const TX_STATUS = {
 const LAYERS = {
   layer1: 'Layer1',
   layer2: 'Layer2',
+  celo: 'Celo',
 };
 
 const layerOneNetwork = process.env.REACT_APP_ETH_NETWORK === 'mainnet' ? '' : `${process.env.REACT_APP_ETH_NETWORK}.`;
 const layerTwoNetwork = process.env.REACT_APP_L2_ETH_NETWORK;
+const celoNetworkExplorer = process.env.REACT_APP_CELO_NETWORK === 'baklava'
+  ? 'https://baklava-blockscout.celo-testnet.org/'
+  : process.env.REACT_APP_CELO_NETWORK === 'alfajores'
+    ? 'https://alfajores-blockscout.celo-testnet.org'
+    : 'https://explorer.celo.org';
+
 
 const etherscanLinks = {
   tx: (hash: string): string => `https://${layerOneNetwork}etherscan.io/tx/${hash}`,
@@ -216,6 +223,11 @@ const blockscoutLinks = {
   address: (address: string): string => `https://blockscout.com/poa/${layerTwoNetwork}/address/${address}`,
 };
 
+const celoLinks = {
+  tx: (hash: string): string => `${celoNetworkExplorer}/tx/${hash}`,
+  address: (address: string): string => `${celoNetworkExplorer}/address/${address}`,
+};
+
 export {
   ROLES,
   ROUTES,
@@ -223,6 +235,7 @@ export {
   LAYERS,
   etherscanLinks,
   blockscoutLinks,
+  celoLinks,
   LABELS,
   IMAGE_SUPPORTED_FORMATS,
   COLORS,
