@@ -59,6 +59,7 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
   const [isFetchingWebsite, setIsFetchingWebsite] = useState<boolean>(true);
   const [isExpiredEvent, setIsExpiredEvent] = useState<boolean>(false);
 
+  const DAY = 24 * 60 * 60 * 1000;
   const parseDate = (date: string, time: string, timezone: number): Date => {
     const timezoneString = ('00' + Math.abs(timezone)).slice(-2) + '00';
     const dateString = `${date}T${time}${timezone >= 0 ? `+${timezoneString}` : `-${timezoneString}`}`;
@@ -355,7 +356,7 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
               let startDateLimit =
                 values.end_date !== ''
                   ? {
-                      from: new Date(new Date(values.end_date).setHours(0, 0, 0, 0)),
+                      from: new Date(new Date(values.end_date + 'T00:00:00').getTime() + DAY),
                       to: new Date('2030-01-01'),
                     }
                   : undefined;
@@ -364,7 +365,7 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
                 values.start_date !== ''
                   ? {
                       from: new Date('2021-01-01'),
-                      to: new Date(new Date(values.start_date).setHours(23, 59, 59, 999)),
+                      to: new Date(new Date(values.start_date + 'T00:00:00').getTime() - DAY),
                     }
                   : undefined;
 
