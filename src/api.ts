@@ -1250,7 +1250,7 @@ export function getWebsiteByEventIdAndSecretCode(eventId: number, secret_code?: 
 }
 
 export function getWebsiteByName(claimName: string): Promise<Website> {
-  return secureFetch(`${API_BASE}/website/${claimName}`);
+  return secureFetch(`${API_BASE}/admin/website/${claimName}`);
 }
 
 export function getWebsiteClaimUrls(claimName: string, claimed?: boolean): Promise<WebsiteClaimUrl[]> {
