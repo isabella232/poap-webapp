@@ -489,7 +489,15 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
                   </ReactModal>
                 </>
               )}
-              <EventField disabled={false} title="Description" type="textarea" name="description" />
+              <EventField
+                disabled={false}
+                title="Description"
+                type="textarea"
+                name="description"
+                placeholder="Explain what this POAP is about, including how the POAP will be distributed.
+                This text is stored on the NFT metadata and displayed in the POAP mobile app and all across the POAP ecosystem.
+                Events in languages other than English still have to provide an English description."
+              />
               <CheckboxField
                 title="Virtual Event"
                 name="virtual_event"
@@ -816,7 +824,7 @@ export const ImageContainer = ({
 );
 
 export const EventField: React.FC<EventFieldProps> = ({ title, name, disabled = false, type, placeholder }) => {
-  const hasErrors = (form: FormikProps<any>) => !!form.errors[name] || !!form.errors[name.split('[')[0]] // second option contemplates array-type inputs
+  const hasErrors = (form: FormikProps<any>) => !!form.errors[name] || !!form.errors[name.split('[')[0]]; // second option contemplates array-type inputs
   return (
     <Field
       name={name}
@@ -829,6 +837,7 @@ export const EventField: React.FC<EventFieldProps> = ({ title, name, disabled = 
               wrap="soft"
               disabled={disabled}
               className={classNames(hasErrors(form) && 'error')}
+              placeholder={placeholder}
             />
           )}
           {type !== 'textarea' && (
