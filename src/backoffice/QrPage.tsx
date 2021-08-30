@@ -461,18 +461,20 @@ const QrPage: FC = () => {
                     {qr.tx_status && <TxStatus status={qr.tx_status} />}
                   </div>
 
-                  <div className={'col-md-2 col-xs-12 center ellipsis'}>
+                  <div className={'col-md-2 col-xs-12 center'}>
                     <span className={'visible-sm'}>Beneficiary: </span>
-                    {qr.beneficiary && (
-                      <a
-                        href={`/scan/${qr.beneficiary}`}
-                        target={'_blank'}
-                        title={qr.user_input ? qr.user_input : qr.beneficiary}
-                      >
-                        {qr.user_input ? qr.user_input : qr.beneficiary}
-                      </a>
-                    )}
-                    {!qr.beneficiary && qr.user_input && <>{qr.user_input}</>}
+                    <div className="ellipsis expand-on-hover-md">
+                      {qr.beneficiary && (
+                        <a
+                          href={`/scan/${qr.beneficiary}`}
+                          target={'_blank'}
+                          title={qr.user_input ? qr.user_input : qr.beneficiary}
+                        >
+                          {qr.user_input ? qr.user_input : qr.beneficiary}
+                        </a>
+                      )}
+                      {!qr.beneficiary && qr.user_input && <>{qr.user_input}</>}
+                    </div>
                   </div>
                 </div>
               );

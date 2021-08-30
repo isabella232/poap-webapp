@@ -1297,14 +1297,15 @@ table.backoffice-table {
         background: none;
         margin: 0 0 0 0;
         max-width: 200px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
 
-        div {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+        @media (min-width: 1006px) {
+          div, a, span {
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+          }
         }
 
         &.wrap {
@@ -1358,6 +1359,26 @@ table.backoffice-table {
 
   .filter-by {
     margin-top: 25px;
+  }
+}
+
+.expand-on-hover-md {
+  transition: all 0.3s ease-in-out;
+}
+
+@media (min-width: $bp-mw) {
+  .expand-on-hover-md:hover {
+    position: relative;
+    padding: 8px;
+    border-radius: 4px;
+    z-index: 1000;
+    background-color: white;
+    text-wrap: normal !important;
+    width: fit-content !important;
+    overflow: visible !important;
+    right: 0;
+    border: 1px solid;
+    max-width: none !important;
   }
 }
 
