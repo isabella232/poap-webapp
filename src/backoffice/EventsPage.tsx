@@ -39,12 +39,16 @@ import {
   PoapEvent,
   getEventByFancyId,
   getEventById,
-  getEvents,
+  getPaginatedEvents,
   updateEvent,
   createEvent,
   getTemplates,
   postQrRequests,
   getActiveQrRequests,
+  PaginatedEvent,
+  SortDirection,
+  SortCondition,
+  EventFilter,
 } from '../api';
 import FormFilterReactSelect from 'components/FormFilterReactSelect';
 
@@ -104,9 +108,11 @@ type PaginateAction = {
 };
 
 type EventTableProps = {
-  initialEvents: PoapEvent[];
-  criteria: string;
+  events: PoapEvent[] | undefined;
   limit: number;
+  total: number;
+  onChangePage: (page: number) => void;
+  onChangeSort: (sort: SortCondition) => void;
 };
 
 type EventFieldProps = {
@@ -543,9 +549,9 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
                   disabledDays={
                     values.end_date !== ''
                       ? {
-                          from: new Date(dateFormatterString(values.end_date).getTime() + day),
-                          to: veryFutureDate,
-                        }
+                        from: new Date(dateFormatterString(values.end_date).getTime() + day),
+                        to: veryFutureDate,
+                      }
                       : undefined
                   }
                 />
@@ -560,9 +566,9 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
                   disabledDays={
                     values.start_date !== ''
                       ? {
-                          from: veryOldDate,
-                          to: new Date(dateFormatterString(values.start_date).getTime()),
-                        }
+                        from: veryOldDate,
+                        to: new Date(dateFormatterString(values.start_date).getTime()),
+                      }
                       : undefined
                   }
                 />
@@ -578,19 +584,19 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
                   disabledDays={
                     values.end_date !== ''
                       ? [
-                          {
-                            from: veryOldDate,
-                            to: new Date(dateFormatterString(values.end_date).getTime()),
-                          },
-                          {
-                            from: veryOldDate,
-                            to: new Date(),
-                          },
-                          {
-                            from: getMaxAllowExpiryDate(values.end_date),
-                            to: veryFutureDate,
-                          },
-                        ]
+                        {
+                          from: veryOldDate,
+                          to: new Date(dateFormatterString(values.end_date).getTime()),
+                        },
+                        {
+                          from: veryOldDate,
+                          to: new Date(),
+                        },
+                        {
+                          from: getMaxAllowExpiryDate(values.end_date),
+                          to: veryFutureDate,
+                        },
+                      ]
                       : undefined
                   }
                 />
@@ -867,19 +873,42 @@ const CheckboxField: React.FC<EventFieldProps> = ({ title, action, checked }) =>
 
 export const EventList: React.FC = () => {
   const [criteria, setCriteria] = useState<string>('');
+  const [offset, setOffset] = useState<number>(0);
   const [limit, setLimit] = useState<number>(10);
+  const [orderBy, setOrderBy] = useState<SortCondition>({
+    sort_by: 'id',
+    sort_direction: SortDirection.descending
+  });
 
-  const [events, fetchingEvents, fetchEventsError] = useAsync(getEvents);
+  let delayedId: NodeJS.Timeout;
+
+  const fetchEvents = useCallback(() => {
+    const filter: EventFilter = {
+      name: criteria ? criteria : undefined
+    };
+
+    return getPaginatedEvents(filter, offset, limit, orderBy);
+  }, [offset, criteria, limit, orderBy]);
+
+  const [paginatedEvent, isLoadingPaginatedEvents, hasErrorPaginatedEvents] = useAsync<PaginatedEvent>(fetchEvents);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { value } = e.target;
 
-    setCriteria(value.toLowerCase());
+    if (delayedId) {
+      clearTimeout(delayedId);
+    }
+
+    delayedId = setTimeout(() => {
+      setCriteria(value.toLowerCase());
+      setOffset(0);
+    }, 500);
   };
 
   const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     const { value } = e.target;
     setLimit(parseInt(value, 10));
+    setOffset(0);
   };
 
   return (
@@ -905,29 +934,28 @@ export const EventList: React.FC = () => {
           </select>
         </div>
       </div>
-      {fetchingEvents && <Loading />}
+      {isLoadingPaginatedEvents && <Loading />}
 
-      {fetchEventsError && <div>There was a problem fetching events</div>}
+      {hasErrorPaginatedEvents && <div>There was a problem fetching events</div>}
 
-      {events && <EventTable criteria={criteria} initialEvents={events} limit={limit} />}
+      {paginatedEvent &&
+        <EventTable
+          events={paginatedEvent.items}
+          total={paginatedEvent.total}
+          limit={paginatedEvent.limit}
+          onChangePage={(page) => setOffset(page * paginatedEvent.limit)}
+          onChangeSort={setOrderBy}
+        />}
     </div>
   );
 };
 
-const EventTable: React.FC<EventTableProps> = ({ initialEvents, criteria, limit }) => {
-  const [events, setEvents] = useState<PoapEvent[]>(initialEvents);
-  const [total, setTotal] = useState<number>(events.length);
+const EventTable: React.FC<EventTableProps> = ({ events, total, onChangePage, onChangeSort, limit }) => {
   const [page, setPage] = useState<number>(0);
-  const [idSort, setIdSort] = useState<number>(-1);
-  const [nameSort, setNameSort] = useState<number>(0);
-
-  useEffect(() => {
-    setEvents(initialEvents.filter(handleCriteriaFilter));
-  }, [criteria]); /* eslint-disable-line react-hooks/exhaustive-deps */
-
-  useEffect(() => {
-    setTotal(events.length);
-  }, [events]);
+  const [orderBy, setOrderBy] = useState<SortCondition>({
+    sort_by: 'id',
+    sort_direction: SortDirection.descending
+  });
 
   useEffect(() => {
     setPage(0);
@@ -936,62 +964,46 @@ const EventTable: React.FC<EventTableProps> = ({ initialEvents, criteria, limit 
   const isAdmin = authClient.isAuthenticated();
 
   const handlePageChange = (obj: PaginateAction) => {
-    setPage(obj.selected);
+    const pageSel = obj.selected;
+
+    setPage(pageSel);
+    onChangePage(pageSel);
   };
 
-  const eventsToShowManager = (events: PoapEvent[]): PoapEvent[] => {
-    if (idSort !== 0) {
-      events = events.sort((a, b) => {
-        return a.id > b.id ? idSort : -1 * idSort;
-      });
-    }
-    if (nameSort !== 0) {
-      events = events.sort((a, b) => {
-        return a.name > b.name ? nameSort : -1 * nameSort;
-      });
-    }
-    if (events.length <= 10) return events;
-    return events.slice(page * limit, page * limit + limit);
-  };
+  const handleSort = (field: string) => {
+    let dir;
 
-  const handleCriteriaFilter = (event: PoapEvent): boolean =>
-    event.name.toLowerCase().includes(criteria) || event.id.toString() === criteria;
-
-  const handleIdSort = () => {
-    if (idSort === 0) {
-      setIdSort(1);
+    if (orderBy.sort_by === field && orderBy.sort_direction === SortDirection.ascending) {
+      dir = SortDirection.descending
     } else {
-      setIdSort(-1 * idSort);
+      dir = SortDirection.ascending
     }
-    setNameSort(0);
-  };
+    const sortCond = {
+      sort_by: field,
+      sort_direction: dir
+    };
 
-  const handleNameSort = () => {
-    if (nameSort === 0) {
-      setNameSort(1);
-    } else {
-      setNameSort(-1 * nameSort);
-    }
-    setIdSort(0);
-  };
+    setOrderBy(sortCond);
+    onChangeSort(sortCond);
+  }
 
   return (
     <div>
       <div className={'admin-table transactions'}>
         <div className={'row table-header visible-md'}>
-          <div className={'col-md-1 center pointer'} onClick={handleIdSort}>
-            #{idSort !== 0 && <img className={'img-sort'} src={idSort > 0 ? sortUp : sortDown} alt={'sort'} />}
+          <div className={'col-md-1 center pointer'} onClick={() => handleSort('id')}>
+            #{orderBy.sort_by === 'id' && <img className={'img-sort'} src={orderBy.sort_direction === SortDirection.ascending ? sortUp : sortDown} alt={'sort'} />}
           </div>
-          <div className={`col-md-6 pointer`} onClick={handleNameSort}>
+          <div className={`col-md-6 pointer`} onClick={() => handleSort('name')}>
             Name of the POAP
-            {nameSort !== 0 && <img className={'img-sort'} src={nameSort > 0 ? sortUp : sortDown} alt={'sort'} />}
+            {orderBy.sort_by === 'name' && <img className={'img-sort'} src={orderBy.sort_direction === SortDirection.ascending ? sortUp : sortDown} alt={'sort'} />}
           </div>
           <div className={'col-md-2 center'}>Start Date</div>
           <div className={'col-md-2 center'}>Image</div>
           {isAdmin && <div className={'col-md-1 center'}>Edit</div>}
         </div>
         <div className={'admin-table-row'}>
-          {eventsToShowManager(events).map((event, i) => (
+          {events && events.map((event, i) => (
             <div className={`row ${i % 2 === 0 ? 'even' : 'odd'} relative`} key={event.id}>
               <div className={'col-md-1 center'}>
                 <span className={'visible-sm visible-md'}>#</span>
@@ -1029,7 +1041,7 @@ const EventTable: React.FC<EventTableProps> = ({ initialEvents, criteria, limit 
           ))}
         </div>
         <div className={'pagination'}>
-          {events && events.length > 10 && (
+          {total && total > limit && (
             <ReactPaginate
               pageCount={Math.ceil(total / limit)}
               marginPagesDisplayed={2}

@@ -10,15 +10,12 @@ import { useToasts } from 'react-toast-notifications';
 /* Components */
 import { Loading } from '../components/Loading';
 import FilterSelect from '../components/FilterSelect';
-import FilterReactSelect from '../components/FilterReactSelect';
 import { SubmitButton } from '../components/SubmitButton';
 import { Column, SortingRule, TableInstance, useExpanded, useSortBy, useTable } from 'react-table';
 import { Link } from 'react-router-dom';
 
 /* Helpers */
 import {
-  eventOptionType,
-  getEvents,
   getQrRequests,
   PoapEvent,
   QrRequest,
@@ -36,6 +33,7 @@ import editDisable from 'images/edit-disable.svg';
 import checked from '../images/checked.svg';
 import error from '../images/error.svg';
 import { ExpandedIcon, SortIcon } from './RequestsComponents';
+import EventSelect, { colourStyles } from 'components/EventSelect';
 
 type PaginateAction = {
   selected: number;
@@ -62,13 +60,11 @@ const QrRequests: FC = () => {
   const [isCreationModalOpen, setIsCreationModalOpen] = useState<boolean>(false);
   const [currentQrRequests, setCurrentQrRequests] = useState<QrRequest[]>([]);
   const [selectedQrRequest, setSelectedQrRequest] = useState<undefined | QrRequest>(undefined);
-  const [events, setEvents] = useState<PoapEvent[]>([]);
   const [sortCondition, setSortCondition] = useState<undefined | SortCondition>(undefined);
   const [type, setType] = useState<string | undefined>(undefined);
   const width = useWindowWidth();
 
   useEffect(() => {
-    fetchEvents();
     fetchQrRequests();
   }, []); /* eslint-disable-line react-hooks/exhaustive-deps */
 
@@ -113,8 +109,8 @@ const QrRequests: FC = () => {
     setIsFetchingQrCodes(false);
   };
 
-  const handleSelectChange = (option: OptionTypeBase): void => {
-    setSelectedEvent(option.value);
+  const handleSelectChange = (option?: OptionTypeBase | null): void => {
+    setSelectedEvent(option ? option.value : option);
   };
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
@@ -142,19 +138,14 @@ const QrRequests: FC = () => {
     setIsCreationModalOpen(false);
   };
 
-  const fetchEvents = async () => {
-    const events = await getEvents();
-    setEvents(events);
+  const toEventOption = (event: PoapEvent) => {
+    const label = `${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
+    return {
+      value: event.id,
+      label: label,
+      start_date: event.start_date
+    };
   };
-
-  let eventOptions: eventOptionType[] = [];
-
-  if (events) {
-    eventOptions = events.map((event) => {
-      const label = `${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
-      return { value: event.id, label: label, start_date: event.start_date };
-    });
-  }
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -196,7 +187,12 @@ const QrRequests: FC = () => {
       <div className={'filters-container qr'}>
         <div className={'filter col-md-4'}>
           <div className="filter-option">
-            <FilterReactSelect options={eventOptions} onChange={handleSelectChange} placeholder={'Filter by Event'} />
+            <EventSelect
+              name={'event'}
+              styles={colourStyles}
+              toEventOption={toEventOption}
+              onChange={handleSelectChange}
+              placeholder={'Filter by Event'} />
           </div>
         </div>
         <div className={'filter col-md-3 col-xs-6'}>

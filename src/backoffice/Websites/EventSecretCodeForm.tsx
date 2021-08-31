@@ -1,14 +1,14 @@
-import React, { useMemo, useState } from 'react';
-import { PoapEvent } from '../../api';
+import React, { useState } from 'react';
+import { EventFilter } from '../../api';
 import { Field, Form, Formik } from 'formik';
 import { Loading } from '../../components/Loading';
-import FilterReactSelect from '../../components/FilterReactSelect';
 import { OptionTypeBase } from 'react-select';
+import EventSelect, { colourStyles } from 'components/EventSelect';
 import CloseIcon from '../../images/x.svg';
+
 
 type EventSecretCodeForm = {
   onSubmit: (eventId: number, secretCode?: number) => void;
-  events: PoapEvent[];
   loading: boolean;
   error?: string;
   askSecretCode?: boolean;
@@ -16,7 +16,6 @@ type EventSecretCodeForm = {
 };
 
 export const EventSecretCodeForm: React.FC<EventSecretCodeForm> = ({
-  events,
   error,
   loading,
   onSubmit,
@@ -30,16 +29,13 @@ export const EventSecretCodeForm: React.FC<EventSecretCodeForm> = ({
     props.resetForm();
   };
 
-  const eventOptions = useMemo<OptionTypeBase[]>(() => {
-    return events.map((event) => {
-      const label = `${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
-      return { value: event.id, label: label, start_date: event.start_date };
-    });
-  }, [events]);
-
   type AuthenticationModalFormikValues = {
     eventId?: number;
     secretCode?: number;
+  };
+
+  const filter: EventFilter = {
+    expired: false
   };
 
   return (
@@ -69,11 +65,19 @@ export const EventSecretCodeForm: React.FC<EventSecretCodeForm> = ({
                   <option value="id">Search Event by Event Id</option>
                 </select>
                 {mode === 'name' && (
-                  <FilterReactSelect
-                    options={eventOptions}
+                  <EventSelect
+                    name="event"
+                    filter={filter}
                     placeholder={mode === 'name' && error ? error : 'Select Event'}
-                    onChange={(option: OptionTypeBase) => {
-                      values.eventId = option.value;
+                    onChange={(option?: OptionTypeBase | null) => {
+                      values.eventId = option ? option.value : option;
+                    }}
+                    styles={{
+                      ...colourStyles,
+                      menuPortal: (styles: any) => ({
+                        ...styles,
+                        zIndex: '99999' 
+                      })
                     }}
                     menuPortalTarget={document.body}
                     controlStyles={{ marginBottom: '24px' }}

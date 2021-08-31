@@ -191,7 +191,7 @@ const PoapQrRequestSchema = yup.object().shape({
 });
 
 const IssueForEventFormValueSchema = yup.object().shape({
-  eventId: yup.number().required().min(1),
+  eventId: yup.object().required(),
   addressList: yup.string().required(),
   signer: yup
     .string()
@@ -227,15 +227,13 @@ const UpdateModalWithFormikRangeSchema = yup.object().shape({
 const UpdateModalWithFormikListSchema = yup.object().shape({
   hashesList: yup.string().required(),
   event: yup
-    .string()
-    .matches(/^[0-9]{1,}$/)
-    .required(),
+    .object().required(),
 });
 
 const UpdateModalWithFormikSelectedQrsSchema = yup.object().shape({});
 
 const CheckoutSchema = yup.object().shape({
-  event_id: yup.number().required(),
+  event_id: yup.object().required(),
   fancy_id: yup
     .string()
     .required('A unique name is required')
