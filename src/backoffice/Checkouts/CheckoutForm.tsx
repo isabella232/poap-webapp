@@ -8,7 +8,7 @@ import delve from 'dlv';
 /* Helpers */
 import { ROUTES } from 'lib/constants';
 import { CheckoutSchema } from '../../lib/schemas';
-import { Checkout, PoapEvent, getEvents, getCheckout, createCheckout, editCheckout } from '../../api';
+import { Checkout, getCheckout, createCheckout, editCheckout } from '../../api';
 
 /* Components */
 import DatePicker, { SetFieldValue, DatePickerDay } from '../../components/DatePicker';
@@ -16,12 +16,14 @@ import FormFilterReactSelect from '../../components/FormFilterReactSelect';
 import { SubmitButton } from '../../components/SubmitButton';
 import { EventField } from '../EventsPage';
 import { Loading } from '../../components/Loading';
+import { OptionTypeBase } from 'react-select';
+import EventSelect, { colourStyles } from 'components/EventSelect';
 
 /* Assets */
 
 /* Types */
 type CheckoutFormType = {
-  event_id: number;
+  event_id: OptionTypeBase;
   fancy_id: string;
   max_limit: number;
   timezone: number;
@@ -117,8 +119,6 @@ const CheckoutForm: FC<RouteComponentProps> = (props) => {
 
   /* State */
   const [checkout, setCheckout] = useState<Checkout | null>(null);
-  const [events, setEvents] = useState<PoapEvent[]>([]);
-  const [isFetching, setIsFetching] = useState<null | boolean>(null);
   const [activeCheckout, setActiveCheckout] = useState<boolean>(true);
 
   const initialValues = useMemo(() => {
@@ -129,7 +129,10 @@ const CheckoutForm: FC<RouteComponentProps> = (props) => {
       const _endDate = _endDateTime[0].split('-');
 
       const values: CheckoutFormType = {
-        event_id: checkout.event.id,
+        event_id: {
+          value: checkout.event.id.toString(),
+          label: checkout.event.name
+        },
         fancy_id: checkout.fancy_id,
         max_limit: checkout.max_limit,
         start_date: `${_startDate[1]}-${_startDate[2]}-${_startDate[0]}`,
@@ -141,7 +144,10 @@ const CheckoutForm: FC<RouteComponentProps> = (props) => {
       return values;
     } else {
       const values: CheckoutFormType = {
-        event_id: 0,
+        event_id: {
+          label: '',
+          value: ''
+        },
         fancy_id: '',
         max_limit: 100,
         start_date: '',
@@ -163,7 +169,6 @@ const CheckoutForm: FC<RouteComponentProps> = (props) => {
     if (isEdition) {
       fetchCheckout();
     }
-    fetchEvents();
   }, []); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   /* Data functions */
@@ -179,27 +184,8 @@ const CheckoutForm: FC<RouteComponentProps> = (props) => {
       });
     }
   };
-  const fetchEvents = async () => {
-    setIsFetching(true);
-    try {
-      const events = await getEvents();
-      setEvents(events);
-    } catch (e) {
-      addToast('Error while fetching events', {
-        appearance: 'error',
-        autoDismiss: false,
-      });
-    } finally {
-      setIsFetching(false);
-    }
-  };
-  const parseEvents = (events: PoapEvent[]): SelectOptionType[] => {
-    const options = events.map((event: PoapEvent) => {
-      return { value: event.id, label: event.name };
-    });
-    return [{ value: 0, label: 'Select an event' }, ...options];
-  };
-  const dateFormatter = (day: Date | number) => format(day, 'MM-dd-yyyy');
+
+  const dateFormatter = (day: Date | number) => format(day, 'MM-dd-yyyy'); 
   const dateFormatterString = (date: string) => {
     const parts = date.split('-');
     return new Date(`${parts[2]}-${parts[0]}-${parts[1]}`);
@@ -210,8 +196,6 @@ const CheckoutForm: FC<RouteComponentProps> = (props) => {
   const handleDayClick = (day: Date, dayToSetup: DatePickerDay, setFieldValue: SetFieldValue) => {
     setFieldValue(dayToSetup, dateFormatter(day));
   };
-  let eventOptions: SelectOptionType[] = [];
-  if (events) eventOptions = parseEvents(events);
   const day = 60 * 60 * 24 * 1000;
 
   // Edition Loading Component
@@ -248,8 +232,13 @@ const CheckoutForm: FC<RouteComponentProps> = (props) => {
             } = submittedValues;
 
             // Validate event
-            if (event_id === 0) {
-              actions.setErrors({ event_id: 'Please, select an event' });
+            if (!event_id) {
+              actions.setErrors({
+                event_id: {
+                  value: '',
+                  label: 'Please, select an event'
+                }
+              });
               actions.setSubmitting(false);
               return;
             }
@@ -277,13 +266,13 @@ const CheckoutForm: FC<RouteComponentProps> = (props) => {
 
             const formattedStart = `${_startDate} ${start_time}:00${timezoneSign}${timezoneFilled}`;
             const formattedEnd = `${_endDate} ${end_time}:00${timezoneSign}${timezoneFilled}`;
-
+            const evtId = event_id.value;
             try {
               if (!isEdition) {
-                await createCheckout(event_id, fancy_id, formattedStart, formattedEnd, max_limit, timezone);
+                await createCheckout(evtId, fancy_id, formattedStart, formattedEnd, max_limit, timezone);
               } else {
                 await editCheckout(
-                  event_id,
+                  evtId,
                   fancy_id,
                   formattedStart,
                   formattedEnd,
@@ -311,36 +300,35 @@ const CheckoutForm: FC<RouteComponentProps> = (props) => {
       >
         {({ values, errors, isSubmitting, setFieldValue }) => {
           const handleSelectChange = (name: string) => (selectedOption: any) =>
-            setFieldValue(name, selectedOption.value);
+            setFieldValue(name, name === 'event_id' ? selectedOption : selectedOption.value);
 
           let startDateLimit =
             values.end_date !== ''
               ? {
-                  from: new Date(dateFormatterString(values.end_date).getTime() + day),
-                  to: new Date('2030-01-01'),
-                }
+                from: new Date(dateFormatterString(values.end_date).getTime() + day),
+                to: new Date('2030-01-01'),
+              }
               : undefined;
           let endDateLimit =
             values.start_date !== ''
               ? {
-                  from: new Date('2021-01-01'),
-                  to: new Date(dateFormatterString(values.start_date).getTime()),
-                }
+                from: new Date('2021-01-01'),
+                to: new Date(dateFormatterString(values.start_date).getTime()),
+              }
               : undefined;
 
           return (
             <Form className={'checkout-admin-form'}>
               <h2>{isEdition ? 'Edit' : 'Create'} Checkout</h2>
-
+              
               <div className={'col-md-12'}>
-                <FormFilterReactSelect
+                <EventSelect
                   label="Event"
                   name="event_id"
                   placeholder={'Pick an event'}
                   onChange={handleSelectChange('event_id')}
-                  options={eventOptions}
-                  disabled={!!isFetching}
-                  value={eventOptions?.find((option) => option.value === values['event_id'])}
+                  value={values['event_id']}
+                  styles={colourStyles}
                 />
               </div>
               <div>

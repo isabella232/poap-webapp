@@ -2,7 +2,7 @@ import React, { FC, useEffect, useState } from 'react';
 import { useToasts } from 'react-toast-notifications';
 
 /* Helpers */
-import { getEventById, getEvents, getWebsiteByName, getWebsites, PoapEvent, Website } from '../../api';
+import { getEventById, getWebsiteByName, getWebsites, PoapEvent, Website } from '../../api';
 
 /* Components */
 import { Loading } from '../../components/Loading';
@@ -40,14 +40,10 @@ const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
   const [isEventIdModalOpen, setIsEventIdModalOpen] = useState<boolean>(false);
   const [isFetchingEvent, setIsFetchingEvent] = useState<boolean>(false);
   const [eventIdModalError, setEventIdModalError] = useState<string | undefined>(undefined);
-  const [events, setEvents] = useState<PoapEvent[]>([]);
 
   const { addToast } = useToasts();
 
   /* Effects */
-  useEffect(() => {
-    fetchEvents().then();
-  }, []);
 
   useEffect(() => {
     if (websites.length > 0) fetchWebsites().then();
@@ -75,13 +71,6 @@ const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
     } finally {
       setIsFetching(false);
     }
-  };
-
-  const fetchEvents = async (): Promise<void> => {
-    setIsFetchingEvent(true);
-    const _events = await getEvents(false);
-    setEvents(_events);
-    setIsFetchingEvent(false);
   };
 
   /* UI Handlers */
@@ -173,7 +162,6 @@ const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
       >
         <EventSecretCodeForm
           onSubmit={handleEventIdModalSubmit}
-          events={events}
           error={eventIdModalError}
           loading={isFetchingEvent}
           onClose={() => {

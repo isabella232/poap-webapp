@@ -326,6 +326,7 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
               value={getWebsiteUrl()}
               size={320}
               includeMargin={true}
+              level="H"
               imageSettings={{
                 src: PoapQrLogo,
                 width: 80,

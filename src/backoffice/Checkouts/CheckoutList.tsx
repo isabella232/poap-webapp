@@ -5,12 +5,11 @@ import { OptionTypeBase } from 'react-select';
 import { useToasts } from 'react-toast-notifications';
 
 /* Helpers */
-import { eventOptionType, PoapEvent, Checkout, getEvents, getCheckouts } from '../../api';
+import { PoapEvent, Checkout, getCheckouts } from '../../api';
 
 /* Components */
 import { Loading } from '../../components/Loading';
 import FilterButton from '../../components/FilterButton';
-import FilterReactSelect from '../../components/FilterReactSelect';
 import FilterSelect from '../../components/FilterSelect';
 import ReactPaginate from 'react-paginate';
 
@@ -18,6 +17,7 @@ import ReactPaginate from 'react-paginate';
 import { ReactComponent as EditIcon } from '../../images/edit.svg';
 import checked from '../../images/checked.svg';
 import error from '../../images/error.svg';
+import EventSelect, { colourStyles } from 'components/EventSelect';
 
 /* Types */
 type PaginateAction = {
@@ -31,7 +31,6 @@ const CheckoutList = () => {
   const [limit, setLimit] = useState<number>(10);
   const [activeStatus, setActiveStatus] = useState<boolean | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<number | undefined>(undefined);
-  const [events, setEvents] = useState<PoapEvent[]>([]);
   const [checkouts, setCheckouts] = useState<Checkout[]>([]);
   const [isFetching, setIsFetching] = useState<null | boolean>(null);
 
@@ -40,9 +39,6 @@ const CheckoutList = () => {
   const dateFormatter = (day: string) => format(new Date(day), 'dd-MMM HH:mm');
 
   /* Effects */
-  useEffect(() => {
-    fetchEvents();
-  }, []); /* eslint-disable-line react-hooks/exhaustive-deps */
   useEffect(() => {
     if (checkouts.length > 0) fetchCheckouts();
   }, [page]); /* eslint-disable-line react-hooks/exhaustive-deps */
@@ -69,25 +65,14 @@ const CheckoutList = () => {
       setIsFetching(false);
     }
   };
-  const fetchEvents = async () => {
-    try {
-      const events = await getEvents();
-      setEvents(events);
-    } catch (e) {
-      addToast('Error while fetching events', {
-        appearance: 'error',
-        autoDismiss: false,
-      });
-    }
-  };
 
   /* UI Handlers */
   const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     const { value } = e.target;
     setLimit(parseInt(value, 10));
   };
-  const handleSelectChange = (option: OptionTypeBase): void => {
-    setSelectedEvent(option.value);
+  const handleSelectChange = (option?: OptionTypeBase | null): void => {
+    setSelectedEvent(option ? option.value : option);
   };
   const handleStatusChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     const { value } = e.target;
@@ -97,13 +82,14 @@ const CheckoutList = () => {
   const handlePageChange = (obj: PaginateAction) => setPage(obj.selected);
 
   /* UI Manipulation */
-  let eventOptions: eventOptionType[] = [];
-  if (events) {
-    eventOptions = events.map((event) => {
-      const label = `${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
-      return { value: event.id, label: label, start_date: event.start_date };
-    });
-  }
+  const toLabel = (event: PoapEvent) => {
+    const label = `${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
+    return {
+      value: event.id,
+      label: label,
+      start_date: event.start_date
+    };
+  };
 
   const tableHeaders = (
     <div className={'row table-header visible-md'}>
@@ -123,7 +109,12 @@ const CheckoutList = () => {
       <div className="filters-container checkouts">
         <div className={'filter col-md-4 col-xs-12'}>
           <div className="filter-option">
-            <FilterReactSelect options={eventOptions} onChange={handleSelectChange} placeholder={'Filter by Event'} />
+            <EventSelect
+              name="event"
+              styles={colourStyles}
+              onChange={handleSelectChange}
+              toEventOption={toLabel}
+              placeholder={'Filter by Event'} />
           </div>
         </div>
         <div className={'filter col-md-3 col-xs-6'}>

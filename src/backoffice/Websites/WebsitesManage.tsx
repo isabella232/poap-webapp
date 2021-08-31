@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { getEventById, getEvents, PoapEvent, validateEventAndSecretCode } from '../../api';
+import { getEventById, PoapEvent, validateEventAndSecretCode } from '../../api';
 import { authClient } from '../../auth';
 import ReactModal from 'react-modal';
 import WebsiteForm from './WebsiteForm';
@@ -16,7 +16,6 @@ const WebsitesManage: FC = () => {
   const [eventId, setEventId] = useState<number | undefined>(undefined);
   const [event, setEvent] = useState<PoapEvent | undefined>(undefined);
   const [secretCode, setSecretCode] = useState<number | undefined>(undefined);
-  const [events, setEvents] = useState<PoapEvent[]>([]);
   const history = useHistory();
 
   const isAdmin = authClient.isAuthenticated();
@@ -24,17 +23,9 @@ const WebsitesManage: FC = () => {
   useEffect(() => {
     if (isAdmin) {
       setIsAuthenticationModalOpen(false);
-    } else {
-      fetchEvents().then();
     }
   }, []); /* eslint-disable-line react-hooks/exhaustive-deps */
 
-  const fetchEvents = async (): Promise<void> => {
-    setIsLoadingAuth(true);
-    const _events = await getEvents(false);
-    setEvents(_events);
-    setIsLoadingAuth(false);
-  };
 
   const handleAuthenticationSubmit = async (eventId: number, secretCode?: number): Promise<void> => {
     setIsLoadingAuth(true);
@@ -95,7 +86,6 @@ const WebsitesManage: FC = () => {
           error={authError}
           onSubmit={handleAuthenticationSubmit}
           loading={isLoadingAuth}
-          events={events}
           askSecretCode={true}
           onClose={() => {
             history.push(ROUTES.admin);
