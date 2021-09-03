@@ -568,7 +568,7 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
               </div>
             </Form>
             {isEdition && addresses && events &&
-            <div className="filters-container websites">
+            <div className={'admin-table'}>
               <AddressesList
                 events={events}
                 addresses={addresses} />
