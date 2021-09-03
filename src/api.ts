@@ -1050,6 +1050,13 @@ export interface PaginatedDeliveries {
   deliveries: Delivery[];
 }
 
+export interface PaginatedDeliveryAddresses {
+  limit: number;
+  offset: number;
+  total: number;
+  items: DeliveryAddress[];
+}
+
 export function getDeliveries(
   limit: number,
   offset: number,
@@ -1089,8 +1096,9 @@ export function getDelivery(id: string | number): Promise<Delivery> {
   return fetchJson(`${API_BASE}/delivery/${id}`);
 }
 
-export function getDeliveryAddresses(id: string | number): Promise<DeliveryAddress[]> {
-  return fetchJson(`${API_BASE}/delivery-addresses/${id}`);
+export function getDeliveryAddresses(id: string | number, limit: number, offset: number): Promise<PaginatedDeliveryAddresses> {
+  const params = queryString.stringify({ limit, offset });
+  return fetchJson(`${API_BASE}/delivery-addresses/${id}?${params}`);
 }
 
 export function createDelivery(
