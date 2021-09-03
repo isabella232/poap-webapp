@@ -123,9 +123,10 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
   }, [reRenderOnNewDelivery]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   useEffect(() => {
-    if (addresses.length > 0)
+    if (addresses.length > 0){
       fetchDeliveryAddresses().then();
-  }, [addressesPage]);
+    }
+  }, [addressesPage]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   /* Data functions */
   const fetchDelivery = async () => {
@@ -230,11 +231,6 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
       });
     }
   }
-
-  const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
-    const { value } = e.target;
-    setAddressesLimit(parseInt(value, 10));
-  };
 
   const handlePageChange = (obj: PaginateAction) => setAddressesPage(obj.selected);
 
