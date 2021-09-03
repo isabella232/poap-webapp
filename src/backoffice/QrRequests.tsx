@@ -527,7 +527,7 @@ const QrRequestTable: React.FC<QrRequestTableProps> = ({ data, onEdit, onSortCha
           })}
         {loading && (
           <tr>
-            <td colSpan={8}>
+            <td className={'loading'} colSpan={10}>
               <Loading />
             </td>
           </tr>
@@ -546,7 +546,7 @@ const EventSubComponent: React.FC<EventSubComponentProps> = ({ event, reviewed_b
   const dateFormatter = (dateString: string) => format(new Date(dateString), 'dd-MMM-yyyy');
 
   return (
-    <div style={{ textAlign: 'center' }} className={'subcomponent'}>
+    <div style={{ textAlign: 'center' }} className={'subcomponent-content'}>
       <h4 style={{ fontWeight: 500 }}>
         from {dateFormatter(event.start_date)} to {dateFormatter(event.end_date)} expires{' '}
         {dateFormatter(event.expiry_date)}

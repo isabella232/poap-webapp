@@ -1298,8 +1298,12 @@ table.backoffice-table {
         margin: 0 0 0 0;
         max-width: 200px;
 
+        &.loading {
+          text-align: center;
+        }
+
         @media (min-width: 1006px) {
-          div, a, span {
+          & > div:not(.subcomponent-content), a, span {
             display: inline-block;
             white-space: nowrap;
             overflow: hidden;
@@ -1327,6 +1331,13 @@ table.backoffice-table {
 
           .subcomponent {
             padding: 4px 4px 4px 4px;
+
+            .subcomponent-content {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              flex-direction: column;
+            }
           }
         }
       }
