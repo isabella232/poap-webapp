@@ -25,8 +25,13 @@ import { Loading } from '../../components/Loading';
 import { authClient } from '../../auth';
 import { ROUTES } from '../../lib/constants';
 import { useAsyncDebounce } from 'react-table';
+import ReactPaginate from "react-paginate";
 
 /* Types */
+type PaginateAction = {
+  selected: number;
+};
+
 type DeliveryFormType = {
   slug: string;
   event_ids: string[];
@@ -47,6 +52,9 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
 
   /* State */
   const [delivery, setDelivery] = useState<Delivery | null>(null);
+  const [addressesPage, setAddressesPage] = useState<number>(0);
+  const [addressesTotal, setAddressesTotal] = useState<number>(0);
+  const [addressesLimit, setAddressesLimit] = useState<number>(10);
   const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
   const [addressesError, setAddressesError] = useState<string>('');
   const [eventIdsError, setEventIdsError] = useState<string>('');
@@ -114,14 +122,18 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
     fetchEvents().then();
   }, [reRenderOnNewDelivery]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
+  useEffect(() => {
+    if (addresses.length > 0)
+      fetchDeliveryAddresses().then();
+  }, [addressesPage]);
+
   /* Data functions */
   const fetchDelivery = async () => {
     try {
       const _delivery = await getDelivery(id);
       setDelivery(_delivery);
       setActiveDelivery(_delivery.active);
-      const _addresses = await getDeliveryAddresses(id);
-      setAddresses(_addresses);
+      await fetchDeliveryAddresses();
     } catch (e) {
       addToast('Error while fetching delivery', {
         appearance: 'error',
@@ -129,6 +141,12 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
       });
     }
   };
+  const fetchDeliveryAddresses = async () => {
+    const _addresses = await getDeliveryAddresses(id, addressesLimit, addressesPage * addressesLimit);
+    setAddresses(_addresses.items);
+    setAddressesTotal(_addresses.total);
+  }
+
   const fetchEvents = async () => {
     try {
       const events = await getEvents();
@@ -203,8 +221,8 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
   }
   const refreshAddresses = async () => {
     try {
-      const _addresses = await getDeliveryAddresses(id);
-      setAddresses(_addresses);
+      setAddressesPage(0);
+      await fetchDeliveryAddresses();
     } catch (e) {
       addToast('Error while refreshing addresses. '+e, {
         appearance: 'error',
@@ -212,6 +230,13 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
       });
     }
   }
+
+  const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
+    const { value } = e.target;
+    setAddressesLimit(parseInt(value, 10));
+  };
+
+  const handlePageChange = (obj: PaginateAction) => setAddressesPage(obj.selected);
 
   // Edition Loading Component
   if (isEdition && !delivery) {
@@ -548,6 +573,18 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
             {isEdition && addresses && events && <AddressesList
               events={events}
               addresses={addresses} />}
+              {addressesTotal > addressesLimit && (
+                <div className={'pagination'}>
+                  <ReactPaginate
+                    pageCount={Math.ceil(addressesTotal / addressesLimit)}
+                    marginPagesDisplayed={2}
+                    pageRangeDisplayed={5}
+                    activeClassName={'active'}
+                    onPageChange={handlePageChange}
+                    forcePage={addressesPage}
+                  />
+                </div>
+              )}
             </>
           );
         }}
