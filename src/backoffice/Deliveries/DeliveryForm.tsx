@@ -223,6 +223,7 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
   const refreshAddresses = async () => {
     try {
       setAddressesPage(0);
+      setAddressesLimit(10);
       await fetchDeliveryAddresses();
     } catch (e) {
       addToast('Error while refreshing addresses. '+e, {
@@ -566,9 +567,11 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
                 <SubmitButton text={isEdition ? 'Save changes' : 'Create delivery'} isSubmitting={isSubmitting} type='submit' canSubmit={true} />
               </div>
             </Form>
-            {isEdition && addresses && events && <AddressesList
-              events={events}
-              addresses={addresses} />}
+            {isEdition && addresses && events &&
+            <div className="filters-container websites">
+              <AddressesList
+                events={events}
+                addresses={addresses} />
               {addressesTotal > addressesLimit && (
                 <div className={'pagination'}>
                   <ReactPaginate
@@ -581,6 +584,7 @@ const DeliveryForm: FC<RouteComponentProps> = (props) => {
                   />
                 </div>
               )}
+            </div>}
             </>
           );
         }}
