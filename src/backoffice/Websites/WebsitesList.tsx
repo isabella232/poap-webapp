@@ -278,16 +278,16 @@ const WebsitesList: FC<WebsitesListProps> = ({ onCreateNew, onEdit }) => {
             })}
           </div>
           {total > limit && (
-            <div className={'pagination'}>
-              <ReactPaginate
-                pageCount={Math.ceil(total / limit)}
-                marginPagesDisplayed={2}
-                pageRangeDisplayed={5}
-                activeClassName={'active'}
-                onPageChange={handlePageChange}
-                forcePage={page}
-              />
-            </div>
+              <div className={'pagination'}>
+                <ReactPaginate
+                  pageCount={Math.ceil(total / limit)}
+                  marginPagesDisplayed={2}
+                  pageRangeDisplayed={5}
+                  activeClassName={'active'}
+                  onPageChange={handlePageChange}
+                  forcePage={page}
+                />
+              </div>
           )}
         </div>
       )}
