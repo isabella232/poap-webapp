@@ -95,7 +95,7 @@ type LinkCreationModalFormikValues = {
 };
 
 const toEventOption = (event: PoapEvent) => {
-  const label = `${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
+  const label = `#${event.id} - ${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
   return {
     value: event.id,
     label: label,
@@ -232,6 +232,15 @@ const QrPage: FC = () => {
     }
   };
 
+  const toLabel = (event: PoapEvent) => {
+    const label = `#${event.id} - ${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
+    return {
+      value: event.id,
+      label: label,
+      start_date: event.start_date
+    };
+  };
+
   const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
     const { value } = e.target;
     setLimit(parseInt(value, 10));
@@ -260,6 +269,7 @@ const QrPage: FC = () => {
               filter={{
                 from_admin: !isAdmin ? false : undefined
               }}
+              toEventOption={toLabel}
               styles={colourStyles}
               onChange={handleSelectChange}
               placeholder={'Filter by Event'} />

@@ -12,12 +12,13 @@ import { getSigners, mintEventToManyUsers, AdminAddress, PoapEvent, mintUserToMa
 import { SubmitButton } from '../components/SubmitButton';
 import { Loading } from '../components/Loading';
 import Transaction from '../components/Transaction';
-import EventSelect, { colourStyles, FormEventSelect } from 'components/EventSelect';
+import EventSelect, { colourStyles } from 'components/EventSelect';
 
 interface IssueForEventPageState {
   initialValues: IssueForEventFormValues;
   signers: AdminAddress[];
   queueMessage: string;
+  selectedEvent: number,
   loaded: boolean;
 }
 
@@ -33,6 +34,7 @@ export class IssueForEventPage extends React.Component<{}, IssueForEventPageStat
       addressList: '',
       signer: '',
     },
+    selectedEvent: -1,
     signers: [],
     queueMessage: '',
     loaded: false,
@@ -57,6 +59,15 @@ export class IssueForEventPage extends React.Component<{}, IssueForEventPageStat
   }
 
   onSubmit = async (values: IssueForEventFormValues, actions: FormikActions<IssueForEventFormValues>) => {
+    let { selectedEvent } = this.state;
+    if (selectedEvent < 0) {
+      actions.setStatus({
+        ok: false,
+        msg: `Please, select event`,
+      });
+      return;
+    }
+
     const addresses = values.addressList
       .trim()
       .split('\n')
@@ -88,7 +99,7 @@ export class IssueForEventPage extends React.Component<{}, IssueForEventPageStat
     try {
       actions.setStatus(null);
       this.setState({ queueMessage: '' });
-      const response = await mintEventToManyUsers(values.eventId?.value, addresses, values.signer);
+      const response = await mintEventToManyUsers(selectedEvent, addresses, values.signer);
       this.setState({ queueMessage: response.queue_uid });
       actions.setStatus({ ok: true });
     } catch (err) {
@@ -98,6 +109,22 @@ export class IssueForEventPage extends React.Component<{}, IssueForEventPageStat
       });
     } finally {
       actions.setSubmitting(false);
+    }
+  };
+
+  toLabel = (event: PoapEvent) => {
+    const label = `#${event.id} - ${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
+    return {
+      value: event.id,
+      label: label,
+      start_date: event.start_date
+    };
+  };
+
+  onSelectChange = (value: any): void => {
+    if (value) {
+      let selectedEvent = value.value;
+      this.setState({ selectedEvent });
     }
   };
 
@@ -119,9 +146,13 @@ export class IssueForEventPage extends React.Component<{}, IssueForEventPageStat
                 <div className="bk-form-row">
                   <label htmlFor="eventId">Choose Event:</label>
                   <Field
-                    component={FormEventSelect}
+                    component={EventSelect}
+                    styles={colourStyles}
                     name={'eventId'}
+                    onChange={this.onSelectChange}
                     placeholder={'Please, enter the event name'}
+                    toEventOption={this.toLabel}
+                    className={'rselect'}
                   />
                   <ErrorMessage name="eventId" component="p" className="bk-error" />
                 </div>
@@ -240,6 +271,15 @@ export class IssueForUserPage extends React.Component<{}, IssueForUserPageState>
     });
   };
 
+  toLabel = (event: PoapEvent) => {
+    const label = `#${event.id} - ${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
+    return {
+      value: event.id,
+      label: label,
+      start_date: event.start_date
+    };
+  };
+
   render() {
     let { signers, queueMessage, initialValues } = this.state;
 
@@ -254,6 +294,7 @@ export class IssueForUserPage extends React.Component<{}, IssueForUserPageState>
             onChange={this.onSelectChange}
             placeholder={'Select any amount of events'}
             className={'rselect'}
+            toEventOption={this.toLabel}
             isMulti
           />
         </div>

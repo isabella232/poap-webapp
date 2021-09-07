@@ -131,6 +131,7 @@ export type ImageContainerProps = {
   setFieldValue: Function;
   errors: any;
   name: string;
+  disabled?: boolean;
   shouldShowInfo?: boolean;
   customLabel?: ReactElement;
 };
@@ -414,6 +415,12 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
               return;
             }
 
+            if (!create && !isAdmin && submittedValues['image']) {
+              actions.setErrors({ image: 'Can not edit the POAP image after creation' });
+              actions.setSubmitting(false);
+              return;
+            }
+
             Object.entries(othersKeys).forEach(([key, value]) => {
               formData.append(key, typeof value === 'number' ? String(value) : value);
             });
@@ -615,10 +622,11 @@ const EventForm: React.FC<{ create?: boolean; event?: PoapFullEvent }> = ({ crea
               </div>
               <div className="bk-group">
                 <ImageContainer
-                  text="POAP's artwork"
+                  text={`POAP's artwork ${!isAdmin ? '(can not edit image after creation)' : ''}`}
                   handleFileChange={handleFileChange}
                   setFieldValue={setFieldValue}
                   errors={errors}
+                  disabled={!isAdmin && !create}
                   name="image"
                 />
                 <div>
@@ -805,6 +813,7 @@ export const ImageContainer = ({
   setFieldValue,
   errors,
   shouldShowInfo = true,
+  disabled = false,
   customLabel,
   name,
 }: ImageContainerProps) => (
@@ -813,6 +822,7 @@ export const ImageContainer = ({
     <input
       type="file"
       accept="image/png"
+      disabled={disabled}
       className={classNames(Boolean(errors?.[name]) && 'error')}
       onChange={(e: ChangeEvent<HTMLInputElement>) => handleFileChange(e, setFieldValue, name)}
     />
