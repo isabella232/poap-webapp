@@ -4,19 +4,19 @@ import { OptionTypeBase } from 'react-select';
 import { useToasts } from 'react-toast-notifications';
 
 /* Helpers */
-import { eventOptionType, PoapEvent, Delivery, getEvents, getDeliveries } from '../../api';
+import { PoapEvent, Delivery, getEvents, getDeliveries } from '../../api';
 import { ROUTES } from '../../lib/constants';
 
 /* Components */
 import { Loading } from '../../components/Loading';
 import FilterButton from '../../components/FilterButton';
-import FilterReactSelect from '../../components/FilterReactSelect';
 import ReactPaginate from 'react-paginate';
 
 /* Assets */
 import { ReactComponent as EditIcon } from '../../images/edit.svg';
 import checked from '../../images/checked.svg';
 import error from '../../images/error.svg';
+import EventSelect, { colourStyles } from 'components/EventSelect';
 
 /* Types */
 type PaginateAction = {
@@ -82,19 +82,20 @@ const DeliveriesList = () => {
     const { value } = e.target;
     setLimit(parseInt(value, 10));
   };
-  const handleSelectChange = (option: OptionTypeBase): void => {
-    setSelectedEvent(option.value);
+  const handleSelectChange = (option?: OptionTypeBase | null): void => {
+    setSelectedEvent(option ? option.value : option);
   };
   const handlePageChange = (obj: PaginateAction) => setPage(obj.selected);
 
   /* UI Manipulation */
-  let eventOptions: eventOptionType[] = [];
-  if (events) {
-    eventOptions = events.map((event) => {
-      const label = `${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
-      return { value: event.id, label: label, start_date: event.start_date };
-    });
-  }
+  const toLabel = (event: PoapEvent) => {
+    const label = `#${event.id} - ${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
+    return {
+      value: event.id,
+      label: label,
+      start_date: event.start_date
+    };
+  };
 
   const tableHeaders = (
     <div className={'row table-header visible-md'}>
@@ -112,7 +113,12 @@ const DeliveriesList = () => {
       <div className="filters-container deliveries">
         <div className={'filter col-md-4 col-xs-12'}>
           <div className="filter-option">
-            <FilterReactSelect options={eventOptions} onChange={handleSelectChange} placeholder={'Filter by Event'} />
+            <EventSelect
+              name="event"
+              styles={colourStyles}
+              onChange={handleSelectChange}
+              toEventOption={toLabel}
+              placeholder={'Filter by Event'} />
           </div>
         </div>
         <div className={'col-md-5'} />

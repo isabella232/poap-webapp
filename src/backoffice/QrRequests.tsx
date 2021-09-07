@@ -139,7 +139,7 @@ const QrRequests: FC = () => {
   };
 
   const toEventOption = (event: PoapEvent) => {
-    const label = `${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
+    const label = `#${event.id} - ${event.name ? event.name : 'No name'} (${event.fancy_id}) - ${event.year}`;
     return {
       value: event.id,
       label: label,

@@ -191,7 +191,6 @@ const PoapQrRequestSchema = yup.object().shape({
 });
 
 const IssueForEventFormValueSchema = yup.object().shape({
-  eventId: yup.object().required(),
   addressList: yup.string().required(),
   signer: yup
     .string()
