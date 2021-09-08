@@ -425,8 +425,8 @@ const WebsiteForm: FC<WebsiteFormProps> = ({ eventId, secretCode, maybeEvent }) 
                         <EventField title={'Requested Codes'} name={'codesQuantity'} type={'number'} disabled={edit} />
                         {isActiveQrRequest && (
                           <p className={'warning-text'}>
-                            You already have <b>pending requested codes</b>, if you enter a number different from zero
-                            your previous request would be updated to this value.
+                            There’s a pending code request for this website. If you select a number different than zero,
+                            the previous request will be updated to the new value.
                           </p>
                         )}
                       </div>
