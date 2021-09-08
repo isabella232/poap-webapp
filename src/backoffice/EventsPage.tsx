@@ -1008,7 +1008,10 @@ const EventTable: React.FC<EventTableProps> = ({ events, total, onChangePage, on
             Name of the POAP
             {orderBy.sort_by === 'name' && <img className={'img-sort'} src={orderBy.sort_direction === SortDirection.ascending ? sortUp : sortDown} alt={'sort'} />}
           </div>
-          <div className={'col-md-2 center'}>Start Date</div>
+          <div className={'col-md-2 center'} onClick={() => handleSort('start_date')}>
+            Start Date
+            {orderBy.sort_by === 'start_date' && <img className={'img-sort'} src={orderBy.sort_direction === SortDirection.ascending ? sortUp : sortDown} alt={'sort'} />}
+          </div>
           <div className={'col-md-2 center'}>Image</div>
           {isAdmin && <div className={'col-md-1 center'}>Edit</div>}
         </div>
