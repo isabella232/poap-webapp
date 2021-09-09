@@ -15,7 +15,7 @@ Sentry.init({
   integrations: [new Integrations.BrowserTracing()],
   environment: process.env.REACT_APP_SENTRY_ENVIRONMENT,
   // Using COMMIT_REF to get the commit hash in netlify building context
-  release: process.env.COMMIT_REF,
+  release: process.env.REACT_APP_SENTRY_RELEASE,
   // We recommend adjusting this value in production, or using tracesSampler
   // for finer control
   tracesSampleRate: 0.2,
