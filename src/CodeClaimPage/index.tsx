@@ -63,7 +63,6 @@ export const CodeClaimPage: React.FC<RouteComponentProps<{ hash: string }>> = ({
   };
 
   const checkUserTokens = () => {
-    console.log('check user tokens');
     if (!claim) return;
 
     let { user_input, beneficiary } = claim;

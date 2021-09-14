@@ -223,8 +223,8 @@ const ClaimForm: React.FC<{
 
   const migrationText = (
     <div className={'backoffice-tooltip'}>
-      All POAPs are minted in xDAI, but should you want your POAP in mainnet, un-check this checkbox so that you can
-      submit the transaction to migrate the badge to mainnet. You'll need to pay for the transaction cost. Not available
+      All POAPs are minted in xDAI, but should you want your POAP in Ethereum or Celo, check this checkbox so that you can
+      submit the transaction to migrate the badge. You'll need to pay for the transaction cost if migrating to Ethereum. Not available
       for claims with email.
     </div>
   );

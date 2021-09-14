@@ -120,7 +120,7 @@ export const RedeemPage: FC<RouteComponentProps> = ({ match }) => {
             return (
               <Form className="claim-form">
                 <div className="redeem-text">
-                  This POAPs were claimed with email <span>{claim.email}</span>, please enter your Ethereum address or
+                  This POAPs were claimed with email <span>{claim.email}</span>, please enter your Ethereum/Celo address or
                   ENS to claim them
                 </div>
                 <Field
@@ -131,7 +131,7 @@ export const RedeemPage: FC<RouteComponentProps> = ({ match }) => {
                         type="text"
                         autoComplete="off"
                         className={classNames('width500', !!form.errors[field.name] && 'error')}
-                        placeholder="Input your Ethereum address or ENS"
+                        placeholder="Input your Ethereum/Celo address or ENS"
                         name="address"
                         onChange={handleChange}
                         value={values.address}
