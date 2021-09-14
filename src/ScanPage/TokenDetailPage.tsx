@@ -197,9 +197,9 @@ export const TokenDetailPage: React.FC<RouteComponentProps<{
   const getMessageByLayer = (layer: string): string => {
     let message = '';
     const messageCases = {
-      layer1: 'This POAP is currently on Ethereum and it can be migrated to xDAI',
-      layer2: 'This POAP is currently on xDAI and it can be migrated to Ethereum and Celo',
-      celo: 'This POAP is currently on Celo and it can be migrated to xDAI',
+      layer1: 'This POAP is currently on Ethereum and can be migrated to xDAI',
+      layer2: 'This POAP is currently on xDAI and can be migrated to Ethereum and Celo',
+      celo: 'This POAP is currently on Celo and can be migrated to xDAI',
     };
     message = (messageCases as any)[layer.toLowerCase()];
     return message;
