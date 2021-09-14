@@ -323,7 +323,7 @@ const ClaimForm: React.FC<{
                     tooltipContent={[migrationText]}
                     onClick={() => setMintingTo(LAYERS.layer1)}
                   >
-                    Minting in mainnet
+                    Minting in Ethereum
                   </NetCheckbox>
                   {/* <CheckboxIcon color={mainColor ?? COLORS.primaryColor} /> Free minting in xDAI{' '}
                   <Tooltip content={[migrationText]}>
