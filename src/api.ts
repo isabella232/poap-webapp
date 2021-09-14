@@ -362,6 +362,7 @@ const API_WEBSITES =
 
 const ETH_THE_GRAPH_URL = process.env.REACT_APP_ETH_THE_GRAPH_URL;
 const L2_THE_GRAPH_URL = process.env.REACT_APP_L2_THE_GRAPH_URL;
+const CELO_THE_GRAPH_URL = process.env.REACT_APP_CELO_THE_GRAPH_URL;
 
 async function fetchJson<A>(input: RequestInfo, init?: RequestInit): Promise<A> {
   const res = await fetch(input, init);
@@ -1383,6 +1384,10 @@ export async function tokensQuantityByEventId(eventId: number): Promise<number> 
 
   if (ETH_THE_GRAPH_URL) {
     promises = promises.concat(tokensQuantityByEventIdAndSubgraphUrl(eventId, ETH_THE_GRAPH_URL));
+  }
+
+  if (CELO_THE_GRAPH_URL) {
+    promises = promises.concat(tokensQuantityByEventIdAndSubgraphUrl(eventId, CELO_THE_GRAPH_URL));
   }
 
   const results = await Promise.all(promises);
